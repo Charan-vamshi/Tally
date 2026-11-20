@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dattareya Enterprises — Billing & Inventory</title>
+  <title>Dattareya Enterprises — Billing & Management</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -36,7 +36,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
@@ -81,7 +81,6 @@
     }
   </style>
 
-  <!-- Sun/Sunset Theme Detection -->
   <script>
     (function() {
       const savedTheme = localStorage.getItem('theme');
@@ -100,29 +99,27 @@
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
 
   <!-- ========================================================================= -->
-  <!-- GOOGLE OAUTH LOGIN SCREEN (SHOWN WHEN NOT LOGGED IN) -->
+  <!-- 1. GOOGLE LOGIN OVERLAY -->
   <!-- ========================================================================= -->
   <div id="auth-overlay" class="fixed inset-0 z-50 bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-8 shadow-2xl text-center space-y-6">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-8 shadow-2xl text-center space-y-6">
       
       <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-600 to-green-800 flex items-center justify-center text-white mx-auto shadow-lg shadow-emerald-500/20">
         <i data-lucide="sprout" class="w-9 h-9"></i>
       </div>
 
       <div>
-        <h2 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Dattareya Enterprises</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Billing, Inventory & Khata Management Portal</p>
+        <h2 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Dattareya Enterprises</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Authorized Billing & Vendor Access System</p>
       </div>
 
-      <!-- Access Restricted Alert (Hidden by default) -->
       <div id="auth-error-box" class="hidden p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-xs text-rose-700 dark:text-rose-300 text-left space-y-1">
         <div class="flex items-center gap-1.5 font-bold">
           <i data-lucide="shield-alert" class="w-4 h-4 text-rose-600"></i> Access Denied
         </div>
-        <p id="auth-error-msg">Your Gmail is not authorized to access this system. Contact the owner to get access.</p>
+        <p id="auth-error-msg">Your Gmail is not authorized. Only authorized vendors added by Cherry can enter.</p>
       </div>
 
-      <!-- Google Sign In Button Container -->
       <div class="pt-2 flex flex-col items-center justify-center space-y-3">
         <div id="g_id_onload"
              data-client_id="547580211224-v0sqogmckfo3sksg4l333sjbo921qiu5.apps.googleusercontent.com"
@@ -141,7 +138,7 @@
              data-logo_alignment="left">
         </div>
 
-        <p class="text-[11px] text-slate-400 dark:text-slate-500">Sign in using your authorized Gmail account</p>
+        <p class="text-[11px] text-slate-400 dark:text-slate-500">Sign in with Google to access your dashboard</p>
       </div>
 
     </div>
@@ -149,11 +146,126 @@
 
 
   <!-- ========================================================================= -->
-  <!-- MAIN APPLICATION (SHOWN ONCE LOGGED IN) -->
+  <!-- 2. OWNER VIEW: CHERRY'S EXCLUSIVE COMMAND CENTER -->
   <!-- ========================================================================= -->
-  <div id="main-app" class="flex-1 flex flex-col">
+  <div id="owner-app" class="hidden flex-1 flex flex-col">
+    <!-- Owner Top Bar -->
+    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-sm">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-purple-500/20 font-extrabold text-base">
+            C
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-bold text-base text-slate-900 dark:text-white tracking-tight">Cherry’s Command Center</h1>
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">System Owner</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-mono">Dattareya Enterprises — Root Control</p>
+          </div>
+        </div>
 
-    <!-- TOP APP BAR -->
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition">
+            <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+            <i data-lucide="moon" class="w-4 h-4 block dark:hidden text-slate-700"></i>
+          </button>
+          <button onclick="handleLogout()" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-600 hover:text-rose-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Owner Main Body -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+      
+      <!-- Welcome Hero Banner -->
+      <div class="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div class="relative z-10 space-y-2 max-w-xl">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 text-xs font-semibold">
+            <i data-lucide="crown" class="w-3.5 h-3.5 text-amber-400"></i> Root Access
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Hi Cherry, Welcome to your Portal</h2>
+          <p class="text-xs sm:text-sm text-purple-200/80 leading-relaxed">
+            You hold master control. Add authorized vendor Gmails below with a single tap. Only verified vendors can open their shop counters, keeping your system safe and traffic zeroed out.
+          </p>
+        </div>
+        <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+          <i data-lucide="shield-check" class="w-72 h-72"></i>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Authorized Vendors</p>
+          <p id="owner-vendor-count" class="text-3xl font-extrabold text-purple-600 dark:text-purple-400 font-mono mt-1">0</p>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">Can access shop counters</span>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Traffic Firewall</p>
+          <p class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono mt-1">Active</p>
+          <span class="text-[11px] text-emerald-600 dark:text-emerald-400">Blocks unapproved Gmails</span>
+        </div>
+        <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Database Status</p>
+          <p class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 font-mono mt-1">Neon DB</p>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">Persistent US-East PostgreSQL</span>
+        </div>
+      </div>
+
+      <!-- Fast Vendor Management Panel -->
+      <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Authorized Shop Vendors</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Type your father's or vendor's Gmail and hit <strong>Enter</strong> to instantly grant dashboard access.</p>
+          </div>
+          <span class="text-xs font-mono bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full border border-purple-200 dark:border-purple-800 self-start sm:self-auto">Instant Authorization</span>
+        </div>
+
+        <!-- Fast Gmail Input (Press Enter to Add) -->
+        <form onsubmit="handleQuickAddVendor(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div class="sm:col-span-6">
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Vendor's Google Email (Gmail)</label>
+            <div class="relative">
+              <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+              <input type="email" id="quick-vendor-email" required placeholder="father.gmail@gmail.com" class="w-full pl-9 pr-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500 font-mono">
+            </div>
+          </div>
+          <div class="sm:col-span-4">
+            <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Vendor / Store Name</label>
+            <input type="text" id="quick-vendor-name" placeholder="e.g., Father / Main Counter" class="w-full px-3 py-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500">
+          </div>
+          <div class="sm:col-span-2 flex items-end">
+            <button type="submit" class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-purple-600/20 flex items-center justify-center gap-1.5">
+              <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Authorize
+            </button>
+          </div>
+        </form>
+
+        <!-- Vendors List -->
+        <div class="space-y-3">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Active Vendor Accounts</label>
+          <div id="owner-vendor-list" class="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- 3. VENDOR VIEW: SHOP BILLING & INVENTORY (FOR FATHER / MANAGERS) -->
+  <!-- ========================================================================= -->
+  <div id="vendor-app" class="hidden flex-1 flex flex-col">
+
+    <!-- Top Bar for Vendor -->
     <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
@@ -172,39 +284,29 @@
             </div>
           </div>
 
-          <!-- User Profile & Controls -->
+          <!-- Vendor Greeting & Controls -->
           <div class="flex items-center gap-3">
-            
-            <!-- User Profile Greeting & Role Badge -->
             <div class="flex items-center gap-2 pl-2 pr-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700">
-              <img id="user-avatar" src="" alt="Avatar" class="w-6 h-6 rounded-full bg-slate-300">
+              <img id="vendor-avatar" src="" alt="Avatar" class="w-6 h-6 rounded-full bg-slate-300">
               <div class="flex items-center gap-1.5 text-xs">
-                <span class="font-semibold text-slate-800 dark:text-white" id="user-greeting">Hi, Charan</span>
-                <span id="user-role-badge" class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">Owner</span>
+                <span class="font-semibold text-slate-800 dark:text-white" id="vendor-greeting">Hi, Vendor</span>
+                <span class="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">Vendor</span>
               </div>
             </div>
 
-            <!-- Manage Managers Button (Visible to Owner only) -->
-            <button id="btn-manage-managers" onclick="openManagersModal()" title="Manage Store Managers" class="hidden px-2.5 py-1 text-xs font-medium bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 hover:bg-purple-100 border border-purple-200 dark:border-purple-800 rounded-lg transition sm:flex items-center gap-1">
-              <i data-lucide="shield" class="w-3.5 h-3.5"></i> Managers
+            <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition">
+              <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+              <i data-lucide="moon" class="w-4 h-4 block dark:hidden text-slate-700"></i>
             </button>
 
-            <!-- Dark Mode Toggle -->
-            <button id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center group shadow-sm">
-              <i id="theme-sun-icon" data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400 group-hover:rotate-45 transition-transform duration-300"></i>
-              <i id="theme-moon-icon" data-lucide="moon" class="w-4 h-4 block dark:hidden text-slate-700 group-hover:-rotate-12 transition-transform duration-300"></i>
-            </button>
-
-            <!-- Logout Button -->
-            <button onclick="handleLogout()" title="Log Out" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950 text-slate-600 hover:text-rose-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
+            <button onclick="handleLogout()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950 text-slate-600 hover:text-rose-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition">
               <i data-lucide="log-out" class="w-4 h-4"></i>
             </button>
-
           </div>
 
         </div>
 
-        <!-- NAVIGATION TABS -->
+        <!-- Navigation Tabs -->
         <nav class="flex space-x-1 border-t border-slate-100 dark:border-slate-800 -mb-px overflow-x-auto no-scrollbar py-1">
           <button onclick="switchTab('billing')" id="tab-btn-billing" class="tab-btn flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-700 dark:text-emerald-400 transition-all">
             <i data-lucide="receipt-text" class="w-4 h-4"></i>
@@ -234,14 +336,14 @@
       </div>
     </header>
 
-    <!-- MAIN VIEWPORT -->
+    <!-- Vendor Main Viewport -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
 
       <!-- TAB 1: BILLING COUNTER -->
       <div id="tab-billing" class="tab-content active-tab">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-          <!-- LEFT: CUSTOMER & PRODUCT SELECTOR -->
+          <!-- Customer & Product Selection -->
           <div class="lg:col-span-7 space-y-4">
             
             <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -276,7 +378,7 @@
                   <button type="button" onclick="openNewFarmerModal()" class="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium">+ Register New</button>
                 </div>
                 <select id="farmer-dropdown" onchange="selectKhataFarmer(this.value)" class="w-full px-3 py-2 text-sm bg-emerald-50/50 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700 rounded-lg text-emerald-950 dark:text-emerald-300 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                  <option value="">-- No farmers registered yet. Click '+ Register New' --</option>
+                  <option value="">-- No farmers registered yet --</option>
                 </select>
               </div>
             </div>
@@ -302,7 +404,7 @@
 
           </div>
 
-          <!-- RIGHT: LIVE BILL TABLE & TOTALS -->
+          <!-- Bill Table & Checkout -->
           <div class="lg:col-span-5 space-y-4">
             <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full">
               
@@ -316,7 +418,6 @@
                 </button>
               </div>
 
-              <!-- Items in Bill -->
               <div class="p-3 flex-1 overflow-y-auto max-h-[340px]">
                 <table class="w-full text-left text-xs">
                   <thead>
@@ -337,19 +438,18 @@
                 </div>
               </div>
 
-              <!-- Totals Panel -->
               <div class="p-4 bg-slate-50 dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800 rounded-b-xl space-y-3">
                 <div class="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
                   <div class="flex justify-between">
-                    <span>Subtotal (Taxable Value):</span>
+                    <span>Subtotal:</span>
                     <span id="bill-subtotal" class="font-mono text-slate-900 dark:text-slate-200">₹0.00</span>
                   </div>
                   <div class="flex justify-between text-slate-500 dark:text-slate-400">
-                    <span>CGST (Intra-state):</span>
+                    <span>CGST:</span>
                     <span id="bill-cgst" class="font-mono">₹0.00</span>
                   </div>
                   <div class="flex justify-between text-slate-500 dark:text-slate-400">
-                    <span>SGST (Intra-state):</span>
+                    <span>SGST:</span>
                     <span id="bill-sgst" class="font-mono">₹0.00</span>
                   </div>
                   <div class="flex justify-between font-bold text-slate-900 dark:text-white text-sm pt-2 border-t border-slate-200 dark:border-slate-800">
@@ -443,7 +543,7 @@
         </div>
       </div>
 
-      <!-- TAB 3: KHATA (FARMER CREDIT) -->
+      <!-- TAB 3: KHATA -->
       <div id="tab-khata" class="tab-content hidden-tab space-y-6">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/20 shadow-sm">
@@ -493,7 +593,7 @@
         </div>
       </div>
 
-      <!-- TAB 4: REPORTS & TAX SUMMARY -->
+      <!-- TAB 4: REPORTS -->
       <div id="tab-reports" class="tab-content hidden-tab space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <div>
@@ -535,44 +635,10 @@
 
 
   <!-- ========================================================================= -->
-  <!-- MANAGE MANAGERS MODAL (OWNER ONLY) -->
-  <!-- ========================================================================= -->
-  <div id="managers-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-xl max-w-lg w-full p-5 shadow-xl border border-slate-200 dark:border-slate-800">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-        <div class="flex items-center gap-2">
-          <i data-lucide="shield-check" class="w-5 h-5 text-purple-600"></i>
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Authorized Store Managers</h3>
-        </div>
-        <button onclick="closeManagersModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
-      </div>
-
-      <!-- Add Manager Form -->
-      <form onsubmit="handleAddManager(event)" class="mt-4 flex gap-2">
-        <input type="email" id="mgr-email" required placeholder="father.gmail@gmail.com" class="flex-1 px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500">
-        <input type="text" id="mgr-name" placeholder="Manager Name" class="w-32 px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500">
-        <button type="submit" class="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg transition whitespace-nowrap">
-          + Add Manager
-        </button>
-      </form>
-
-      <!-- Managers List -->
-      <div class="mt-4 space-y-2 max-h-60 overflow-y-auto">
-        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Authorized Accounts</label>
-        <div id="managers-list-div" class="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ========================================================================= -->
   <!-- A4 PRINTABLE TALLY INVOICE MODAL -->
   <!-- ========================================================================= -->
   <div id="print-invoice-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white text-slate-900 rounded-xl max-w-3xl w-full p-6 shadow-2xl relative my-8 print:m-0 print:p-0 print:shadow-none print:w-full">
-      
       <div class="no-print flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
         <div class="flex items-center gap-2">
           <span class="text-sm font-bold text-slate-900">A4 Tally-Style Bill Preview</span>
@@ -588,9 +654,7 @@
         </div>
       </div>
 
-      <!-- BILL TEMPLATE -->
       <div class="border-2 border-slate-900 p-4 font-sans text-xs text-slate-900 leading-normal bg-white">
-        
         <div class="text-center pb-3 border-b-2 border-slate-900">
           <h2 class="text-lg font-extrabold tracking-wide uppercase">Dattareya Enterprises</h2>
           <p class="text-[11px] font-semibold">Wholesale & Retail Dealers in Fertilizers, Pesticides & Seeds</p>
@@ -670,9 +734,7 @@
             <p>Authorised Signatory</p>
           </div>
         </div>
-
       </div>
-
     </div>
   </div>
 
@@ -784,7 +846,6 @@
     let billItems = [];
     let selectedPaymentMode = 'Cash';
 
-    // --- GOOGLE OAUTH 2.0 HANDLER ---
     function parseJwt(token) {
       try {
         const base64Url = token.split('.')[1];
@@ -806,7 +867,6 @@
       const name = payload.given_name || payload.name || 'User';
       const picture = payload.picture || '';
 
-      // Verify authorization with backend
       try {
         const authRes = await fetch('/api/auth/check', {
           method: 'POST',
@@ -818,14 +878,14 @@
         if (authData.authorized) {
           currentUser = {
             email,
-            name,
+            name: email === 'saicharanreddy344@gmail.com' ? 'Cherry' : name,
             role: authData.role, // 'OWNER' or 'MANAGER'
             picture
           };
           sessionStorage.setItem('tally_user', JSON.stringify(currentUser));
-          renderAuthenticatedState();
+          routeUserDashboard();
         } else {
-          showAuthError(`Access Denied: ${email} is not authorized. Please contact the owner.`);
+          showAuthError(`Access Restricted: ${email} is not an authorized vendor. Contact Cherry to obtain access.`);
         }
       } catch (err) {
         showAuthError('Connection error verifying Google login. Try again.');
@@ -837,103 +897,117 @@
       document.getElementById('auth-error-msg').textContent = msg;
     }
 
-    function renderAuthenticatedState() {
+    // Role-based view router
+    function routeUserDashboard() {
       if (!currentUser) return;
 
       document.getElementById('auth-overlay').classList.add('hidden');
-      document.getElementById('user-greeting').textContent = `Hi, ${currentUser.name}`;
-      document.getElementById('user-avatar').src = currentUser.picture || 'https://www.gravatar.com/avatar?d=mp';
-
-      const badge = document.getElementById('user-role-badge');
-      const mgrBtn = document.getElementById('btn-manage-managers');
 
       if (currentUser.role === 'OWNER') {
-        badge.className = "text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300";
-        badge.textContent = "Owner";
-        mgrBtn.classList.remove('hidden');
+        document.getElementById('owner-app').classList.remove('hidden');
+        document.getElementById('vendor-app').classList.add('hidden');
+        loadOwnerVendors();
       } else {
-        badge.className = "text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300";
-        badge.textContent = "Manager";
-        mgrBtn.classList.add('hidden');
+        document.getElementById('vendor-app').classList.remove('hidden');
+        document.getElementById('owner-app').classList.add('hidden');
+        document.getElementById('vendor-greeting').textContent = `Hi, ${currentUser.name}`;
+        document.getElementById('vendor-avatar').src = currentUser.picture || 'https://www.gravatar.com/avatar?d=mp';
+        loadProducts();
+        loadFarmers();
+        loadReports();
       }
-
-      loadProducts();
-      loadFarmers();
-      loadReports();
+      lucide.createIcons();
     }
 
     function handleLogout() {
       sessionStorage.removeItem('tally_user');
       currentUser = null;
+      document.getElementById('owner-app').classList.add('hidden');
+      document.getElementById('vendor-app').classList.add('hidden');
       document.getElementById('auth-overlay').classList.remove('hidden');
       document.getElementById('auth-error-box').classList.add('hidden');
     }
 
-    // --- MANAGERS MODAL (OWNER ONLY) ---
-    async function openManagersModal() {
-      document.getElementById('managers-modal').classList.remove('hidden');
-      loadManagersList();
-    }
-
-    function closeManagersModal() {
-      document.getElementById('managers-modal').classList.add('hidden');
-    }
-
-    async function loadManagersList() {
-      const container = document.getElementById('managers-list-div');
-      container.innerHTML = '<p class="p-3 text-xs text-slate-400">Loading managers...</p>';
+    // --- OWNER VENDOR MANAGEMENT ---
+    async function loadOwnerVendors() {
+      const container = document.getElementById('owner-vendor-list');
+      const countEl = document.getElementById('owner-vendor-count');
+      container.innerHTML = '<p class="p-4 text-xs text-slate-400">Loading authorized vendors...</p>';
 
       try {
         const res = await fetch('/api/managers');
         const list = await res.json();
+        countEl.textContent = list.length;
 
         if (list.length === 0) {
-          container.innerHTML = '<p class="p-3 text-xs text-slate-400">No managers added yet. Type your father\'s Gmail above to give him access.</p>';
+          container.innerHTML = `
+            <div class="p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+              <i data-lucide="user-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+              No vendors added yet. Enter your father's Gmail above and hit <strong>Enter</strong> to authorize him.
+            </div>
+          `;
+          lucide.createIcons();
           return;
         }
 
         container.innerHTML = '';
-        list.forEach(m => {
+        list.forEach(v => {
           const div = document.createElement('div');
-          div.className = "p-3 flex items-center justify-between text-xs";
+          div.className = "p-4 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/40 transition";
           div.innerHTML = `
-            <div>
-              <p class="font-semibold text-slate-800 dark:text-slate-200">${m.name || 'Store Manager'}</p>
-              <p class="text-slate-500 font-mono text-[11px]">${m.email}</p>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold">
+                ${(v.name || 'V')[0].toUpperCase()}
+              </div>
+              <div>
+                <p class="font-bold text-slate-900 dark:text-white">${v.name || 'Store Vendor'}</p>
+                <p class="text-slate-500 dark:text-slate-400 font-mono text-[11px]">${v.email}</p>
+              </div>
             </div>
-            <button onclick="removeManager(${m.id})" class="text-rose-600 hover:text-rose-700 font-medium">Remove</button>
+            <div class="flex items-center gap-3">
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">Authorized</span>
+              <button onclick="handleRevokeVendor(${v.id}, '${v.email}')" class="px-2.5 py-1 text-xs text-rose-600 hover:text-rose-700 dark:text-rose-400 font-medium hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition">
+                Revoke Access
+              </button>
+            </div>
           `;
           container.appendChild(div);
         });
+        lucide.createIcons();
       } catch (e) {
-        container.innerHTML = '<p class="p-3 text-xs text-rose-500">Error loading managers.</p>';
+        container.innerHTML = '<p class="p-4 text-xs text-rose-500">Error loading vendors from database.</p>';
       }
     }
 
-    async function handleAddManager(e) {
+    async function handleQuickAddVendor(e) {
       e.preventDefault();
-      const email = document.getElementById('mgr-email').value;
-      const name = document.getElementById('mgr-name').value || 'Store Manager';
+      const email = document.getElementById('quick-vendor-email').value.trim();
+      const name = document.getElementById('quick-vendor-name').value.trim() || 'Store Vendor';
 
-      await fetch('/api/managers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name })
-      });
+      if (!email) return;
 
-      document.getElementById('mgr-email').value = '';
-      document.getElementById('mgr-name').value = '';
-      loadManagersList();
-    }
-
-    async function removeManager(id) {
-      if (confirm('Remove manager access for this email?')) {
-        await fetch(`/api/managers/${id}`, { method: 'DELETE' });
-        loadManagersList();
+      try {
+        await fetch('/api/managers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name })
+        });
+        document.getElementById('quick-vendor-email').value = '';
+        document.getElementById('quick-vendor-name').value = '';
+        loadOwnerVendors();
+      } catch (err) {
+        alert('Error authorizing vendor: ' + err.message);
       }
     }
 
-    // --- THEME TOGGLE ---
+    async function handleRevokeVendor(id, email) {
+      if (confirm(`Revoke dashboard access for ${email}? They will no longer be able to open the shop counter.`)) {
+        await fetch(`/api/managers/${id}`, { method: 'DELETE' });
+        loadOwnerVendors();
+      }
+    }
+
+    // --- VENDOR SHOP LOGIC ---
     function toggleTheme() {
       const isDark = document.documentElement.classList.contains('dark');
       if (isDark) {
@@ -944,18 +1018,6 @@
         localStorage.setItem('theme', 'dark');
       }
       lucide.createIcons();
-    }
-
-    async function checkDatabaseHealth() {
-      try {
-        const res = await fetch('/api/health');
-        const data = await res.json();
-        const badge = document.getElementById('db-status-badge');
-        if (data.status === 'ok') {
-          badge.className = "hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800";
-          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>Neon DB: Connected</span>`;
-        }
-      } catch (e) {}
     }
 
     async function loadProducts() {
@@ -995,7 +1057,7 @@
       const dropdown = document.getElementById('farmer-dropdown');
       dropdown.innerHTML = '';
       if (farmers.length === 0) {
-        dropdown.innerHTML = '<option value="">-- No farmers registered yet. Click \'+ Register New\' --</option>';
+        dropdown.innerHTML = '<option value="">-- No farmers registered yet --</option>';
         return;
       }
       dropdown.innerHTML = '<option value="">-- Choose Farmer from Khata --</option>';
@@ -1512,14 +1574,12 @@
 
     window.onload = () => {
       lucide.createIcons();
-      checkDatabaseHealth();
 
-      // Check stored session
       const savedUser = sessionStorage.getItem('tally_user');
       if (savedUser) {
         try {
           currentUser = JSON.parse(savedUser);
-          renderAuthenticatedState();
+          routeUserDashboard();
         } catch (e) {
           currentUser = null;
         }
