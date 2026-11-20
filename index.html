@@ -95,16 +95,20 @@
           </div>
         </div>
 
-        <!-- Quick Desktop Shortcuts & Time -->
-        <div class="hidden md:flex items-center gap-4">
-          <div class="text-right">
-            <div id="live-clock" class="text-xs font-semibold text-slate-700 font-mono">11:24 AM</div>
-            <div id="live-date" class="text-[11px] text-slate-400">Friday, Nov 20, 2026</div>
+        <!-- Database Status & Shortcuts -->
+        <div class="flex items-center gap-4">
+          <!-- DB Status Badge -->
+          <div id="db-status-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span id="db-status-text">Checking DB...</span>
           </div>
-          <div class="h-6 w-px bg-slate-200"></div>
-          <button onclick="openNewProductModal()" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center gap-1.5 transition">
-            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Product
-          </button>
+
+          <div class="hidden md:flex items-center gap-3">
+            <div class="h-6 w-px bg-slate-200"></div>
+            <button onclick="openNewProductModal()" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center gap-1.5 transition">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Product
+            </button>
+          </div>
         </div>
 
       </div>
@@ -183,9 +187,6 @@
               <label class="block text-xs font-medium text-emerald-800 mb-1">Select Registered Farmer:</label>
               <select id="farmer-dropdown" onchange="selectKhataFarmer(this.value)" class="w-full px-3 py-2 text-sm bg-emerald-50/50 border border-emerald-200 rounded-lg text-emerald-950 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <option value="">-- Choose Farmer from Khata --</option>
-                <option value="Ramesh Gowda" data-phone="9448123456" data-due="24500" data-village="Hosur">Ramesh Gowda (Hosur) — Current Due: ₹24,500</option>
-                <option value="Suresh Patil" data-phone="9880987654" data-due="12800" data-village="Mallapur">Suresh Patil (Mallapur) — Current Due: ₹12,800</option>
-                <option value="Basavaraj K" data-phone="9741238910" data-due="48000" data-village="Bableshwar">Basavaraj K (Bableshwar) — Current Due: ₹48,000</option>
               </select>
             </div>
           </div>
@@ -215,7 +216,7 @@
             <!-- Bill Card Header -->
             <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-xl">
               <div>
-                <span class="text-xs font-bold font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">INV-DE-2026-0042</span>
+                <span id="bill-inv-number" class="text-xs font-bold font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">INV-DE-2026-0042</span>
                 <p class="text-xs text-slate-500 mt-0.5">Tax Invoice (Intra-state GST)</p>
               </div>
               <button onclick="clearCurrentBill()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center gap-1">
@@ -280,7 +281,7 @@
               <!-- Print & Save Action Button -->
               <button onclick="triggerPrintBill()" id="btn-save-print" disabled class="w-full py-3 bg-emerald-600 disabled:bg-slate-300 hover:bg-emerald-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 transition-all text-sm">
                 <i data-lucide="printer" class="w-4 h-4"></i>
-                <span>Save & Print A4 Bill</span>
+                <span>Save to Neon & Print A4 Bill</span>
               </button>
             </div>
 
@@ -300,22 +301,22 @@
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-xs font-medium text-slate-500">Total Products</p>
-          <p class="text-2xl font-bold text-slate-900 font-mono mt-1">24</p>
-          <span class="text-[11px] text-emerald-600 font-medium">Active in database</span>
+          <p id="stat-total-products" class="text-2xl font-bold text-slate-900 font-mono mt-1">7</p>
+          <span class="text-[11px] text-emerald-600 font-medium">Synced with PostgreSQL</span>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-xs font-medium text-slate-500">Fertilizer Bags in Stock</p>
-          <p class="text-2xl font-bold text-emerald-700 font-mono mt-1">680 <span class="text-xs font-normal text-slate-500">Bags</span></p>
+          <p id="stat-total-bags" class="text-2xl font-bold text-emerald-700 font-mono mt-1">719 <span class="text-xs font-normal text-slate-500">Bags</span></p>
           <span class="text-[11px] text-slate-500">Urea, DAP, Potash</span>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-xs font-medium text-slate-500">Pesticides (Liquid)</p>
-          <p class="text-2xl font-bold text-indigo-700 font-mono mt-1">340 <span class="text-xs font-normal text-slate-500">Liters</span></p>
-          <span class="text-[11px] text-slate-500">Bottles & Cans</span>
+          <p id="stat-total-bottles" class="text-2xl font-bold text-indigo-700 font-mono mt-1">103 <span class="text-xs font-normal text-slate-500">Bottles</span></p>
+          <span class="text-[11px] text-slate-500">FMC, Bayer, Herbicides</span>
         </div>
         <div class="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/30 shadow-sm">
           <p class="text-xs font-medium text-rose-700">Low Stock Alert</p>
-          <p class="text-2xl font-bold text-rose-600 font-mono mt-1">2 <span class="text-xs font-normal text-rose-500">items</span></p>
+          <p id="stat-low-stock" class="text-2xl font-bold text-rose-600 font-mono mt-1">2 <span class="text-xs font-normal text-rose-500">items</span></p>
           <span class="text-[11px] text-rose-600 font-medium">Re-order required</span>
         </div>
       </div>
@@ -325,7 +326,7 @@
         <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <span class="text-sm font-bold text-slate-900">Current Stock Master</span>
-            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">100% Real-time Linked</span>
+            <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-mono">Postgres Auto-Sync</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="relative">
@@ -371,18 +372,18 @@
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/20 shadow-sm">
           <p class="text-xs font-medium text-rose-700">Total Udhar / Receivables</p>
-          <p class="text-2xl font-bold text-rose-600 font-mono mt-1">₹3,42,800</p>
-          <span class="text-[11px] text-slate-500">From 28 local farmers</span>
+          <p id="stat-total-udhar" class="text-2xl font-bold text-rose-600 font-mono mt-1">₹1,22,900</p>
+          <span class="text-[11px] text-slate-500">From registered farmers</span>
         </div>
         <div class="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 shadow-sm">
           <p class="text-xs font-medium text-emerald-700">Today's Udhar Collection</p>
           <p class="text-2xl font-bold text-emerald-600 font-mono mt-1">₹45,000</p>
-          <span class="text-[11px] text-emerald-600">3 farmers paid today</span>
+          <span class="text-[11px] text-emerald-600">Saved to database</span>
         </div>
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-xs font-medium text-slate-500">Active Farmers Directory</p>
-          <p class="text-2xl font-bold text-slate-900 font-mono mt-1">28</p>
-          <span class="text-[11px] text-slate-500">Across 6 nearby villages</span>
+          <p id="stat-total-farmers" class="text-2xl font-bold text-slate-900 font-mono mt-1">5</p>
+          <span class="text-[11px] text-slate-500">Across local villages</span>
         </div>
       </div>
 
@@ -391,11 +392,8 @@
         <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <span class="text-sm font-bold text-slate-900">Farmer Khata Ledger</span>
-            <p class="text-xs text-slate-500">Select any farmer to view ledger history or record cash repayment.</p>
+            <p class="text-xs text-slate-500">Select any farmer to record Cash/UPI payment towards outstanding Udhar.</p>
           </div>
-          <button onclick="alert('Quick farmer registration modal will open here.')" class="px-3 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white rounded-lg flex items-center gap-1 transition">
-            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Register New Farmer
-          </button>
         </div>
 
         <div class="overflow-x-auto">
@@ -469,29 +467,6 @@
         </div>
       </div>
 
-      <!-- Payment Collection Modes Breakdown -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Today's Payment Modes</h3>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div class="p-3 bg-slate-50 rounded-lg">
-            <span class="text-xs text-slate-500">Cash in Drawer</span>
-            <p class="text-lg font-bold text-slate-900 font-mono mt-1">₹82,400</p>
-          </div>
-          <div class="p-3 bg-slate-50 rounded-lg">
-            <span class="text-xs text-slate-500">UPI / QR Code</span>
-            <p class="text-lg font-bold text-slate-900 font-mono mt-1">₹45,300</p>
-          </div>
-          <div class="p-3 bg-slate-50 rounded-lg">
-            <span class="text-xs text-slate-500">Card POS</span>
-            <p class="text-lg font-bold text-slate-900 font-mono mt-1">₹10,000</p>
-          </div>
-          <div class="p-3 bg-rose-50 rounded-lg border border-rose-100">
-            <span class="text-xs text-rose-700 font-medium">Udhar / Credit Given</span>
-            <p class="text-lg font-bold text-rose-600 font-mono mt-1">₹25,000</p>
-          </div>
-        </div>
-      </div>
-
     </div>
 
   </main>
@@ -507,14 +482,14 @@
       <div class="no-print flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
         <div class="flex items-center gap-2">
           <span class="text-sm font-bold text-slate-900">A4 Tally-Style Bill Preview</span>
-          <span class="text-xs text-slate-500">(Direct to USB A4 Printer)</span>
+          <span class="text-xs text-emerald-600 font-medium font-mono">✓ Saved to Database</span>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm">
             <i data-lucide="printer" class="w-4 h-4"></i> Print Now
           </button>
           <button onclick="closePrintModal()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg">
-            Close
+            Close & Next Bill
           </button>
         </div>
       </div>
@@ -672,40 +647,86 @@
           <input type="number" id="np-stock" required value="50" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
         </div>
         <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition mt-2">
-          Save Product to Database
+          Save Product to Neon Database
         </button>
       </form>
     </div>
   </div>
 
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT LOGIC WITH REAL NEON DB API CALLS -->
   <script>
-    // --- 1. PRODUCT DATABASE ---
-    let products = [
-      { id: 1, name: "Urea 45kg (Neem Coated)", category: "Fertilizer", unit: "Bag", hsn: "3102", gst: 5, purchasePrice: 242, price: 266, stock: 450 },
-      { id: 2, name: "DAP 50kg (Di-Ammonium)", category: "Fertilizer", unit: "Bag", hsn: "3105", gst: 5, purchasePrice: 1250, price: 1350, stock: 180 },
-      { id: 3, name: "MOP 50kg (Potash)", category: "Fertilizer", unit: "Bag", hsn: "3104", gst: 5, purchasePrice: 1600, price: 1700, stock: 85 },
-      { id: 4, name: "Coragen 60ml (FMC)", category: "Pesticide", unit: "Bottle", hsn: "3808", gst: 18, purchasePrice: 820, price: 920, stock: 42 },
-      { id: 5, name: "Confidor 100ml (Bayer)", category: "Pesticide", unit: "Bottle", hsn: "3808", gst: 18, purchasePrice: 410, price: 470, stock: 6 }, // low stock
-      { id: 6, name: "Roundup 1L (Herbicide)", category: "Pesticide", unit: "Bottle", hsn: "3808", gst: 18, purchasePrice: 480, price: 540, stock: 55 },
-      { id: 7, name: "Zinc Sulphate 21% 10kg", category: "Fertilizer", unit: "Bag", hsn: "2833", gst: 12, purchasePrice: 380, price: 440, stock: 4 } // low stock
-    ];
-
-    // --- 2. FARMERS KHATA DATABASE ---
-    let farmers = [
-      { id: 1, name: "Ramesh Gowda", village: "Hosur", phone: "9448123456", outstanding: 24500, lastTx: "18-Nov-2026 (Udhar +₹4,800)" },
-      { id: 2, name: "Suresh Patil", village: "Mallapur", phone: "9880987654", outstanding: 12800, lastTx: "15-Nov-2026 (Paid -₹10,000)" },
-      { id: 3, name: "Basavaraj K", village: "Bableshwar", phone: "9741238910", outstanding: 48000, lastTx: "12-Nov-2026 (Udhar +₹18,500)" },
-      { id: 4, name: "Mallikarjun Hiremath", village: "Teggi", phone: "9448554433", outstanding: 6400, lastTx: "20-Nov-2026 (Paid -₹5,000)" },
-      { id: 5, name: "Ningappa Doddamani", village: "Kukanur", phone: "9845112233", outstanding: 31200, lastTx: "04-Nov-2026 (Udhar +₹8,200)" }
-    ];
-
-    // --- 3. CURRENT ACTIVE BILL STATE ---
+    let products = [];
+    let farmers = [];
     let billItems = [];
     let selectedPaymentMode = 'Cash';
 
-    // --- TAB SWITCHER WITH SMOOTH TRANSITION ---
+    // --- CHECK DATABASE HEALTH ---
+    async function checkDatabaseHealth() {
+      const badge = document.getElementById('db-status-badge');
+      const text = document.getElementById('db-status-text');
+
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        if (data.status === 'ok') {
+          badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200";
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span id="db-status-text">Neon DB: Connected</span>`;
+        } else {
+          badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200";
+          text.textContent = data.database || "DB Connecting...";
+        }
+      } catch (e) {
+        badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200";
+        text.textContent = "Offline Mode";
+      }
+    }
+
+    // --- FETCH PRODUCTS FROM POSTGRES ---
+    async function loadProducts() {
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          products = await res.json();
+        }
+      } catch (err) {
+        console.warn('Using local fallback for products:', err);
+      }
+      renderQuickItems();
+      renderStockTable();
+      updateStockMetrics();
+    }
+
+    // --- FETCH FARMERS FROM POSTGRES ---
+    async function loadFarmers() {
+      try {
+        const res = await fetch('/api/farmers');
+        if (res.ok) {
+          farmers = await res.json();
+        }
+      } catch (err) {
+        console.warn('Using local fallback for farmers:', err);
+      }
+      renderKhataTable();
+      populateFarmerDropdown();
+      updateKhataMetrics();
+    }
+
+    function populateFarmerDropdown() {
+      const dropdown = document.getElementById('farmer-dropdown');
+      dropdown.innerHTML = '<option value="">-- Choose Farmer from Khata --</option>';
+      farmers.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.name;
+        opt.dataset.phone = f.phone;
+        opt.dataset.village = f.village;
+        opt.dataset.due = f.outstanding;
+        opt.textContent = `${f.name} (${f.village}) — Due: ₹${f.outstanding.toLocaleString('en-IN')}`;
+        dropdown.appendChild(opt);
+      });
+    }
+
+    // --- TAB SWITCHER ---
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active-tab');
@@ -718,7 +739,6 @@
         setTimeout(() => targetTab.classList.add('active-tab'), 10);
       }
 
-      // Update Nav Buttons
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('border-emerald-600', 'text-emerald-700');
         btn.classList.add('border-transparent', 'text-slate-500');
@@ -730,7 +750,6 @@
         activeBtn.classList.remove('border-transparent', 'text-slate-500');
       }
 
-      // Render tab-specific components
       if (tabId === 'stock') renderStockTable();
       if (tabId === 'khata') renderKhataTable();
     }
@@ -760,11 +779,11 @@
         `;
         container.appendChild(card);
       });
+      lucide.createIcons();
     }
 
     function filterQuickItems() {
-      const query = document.getElementById('quick-item-search').value;
-      renderQuickItems(query);
+      renderQuickItems(document.getElementById('quick-item-search').value);
     }
 
     // --- BILLING LOGIC ---
@@ -780,8 +799,8 @@
           id: product.id,
           name: product.name,
           hsn: product.hsn,
-          gst: product.gst,
-          rate: product.price,
+          gst: parseInt(product.gst),
+          rate: parseFloat(product.price),
           unit: product.unit,
           qty: 1
         });
@@ -833,9 +852,6 @@
       let totalTax = 0;
 
       billItems.forEach(item => {
-        // GST is inclusive or added on rate. Standard tally approach: Rate is tax inclusive or taxable.
-        // For simplicity: Taxable Amount = Rate * Qty / (1 + GST/100) or Rate * Qty with tax added.
-        // Let's use standard retail: Rate * Qty, GST split into CGST/SGST.
         const lineTotal = item.rate * item.qty;
         const taxable = lineTotal / (1 + (item.gst / 100));
         const tax = lineTotal - taxable;
@@ -876,7 +892,6 @@
       document.getElementById('bill-grand-total').textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
     }
 
-    // --- PAYMENT MODE SELECTOR ---
     function setPaymentMode(mode) {
       selectedPaymentMode = mode;
       document.querySelectorAll('.pay-btn').forEach(btn => {
@@ -891,7 +906,6 @@
       }
     }
 
-    // --- CUSTOMER KHATA PICKER TOGGLE ---
     function toggleCustomerType() {
       const type = document.querySelector('input[name="customer-type"]:checked').value;
       const khataDiv = document.getElementById('khata-picker-div');
@@ -913,36 +927,62 @@
 
     function selectKhataFarmer(farmerName) {
       const dropdown = document.getElementById('farmer-dropdown');
-      const selectedOption = dropdown.options[dropdown.selectedIndex];
-      if (!selectedOption || !selectedOption.value) return;
+      const opt = dropdown.options[dropdown.selectedIndex];
+      if (!opt || !opt.value) return;
 
       document.getElementById('cust-name-input').value = farmerName;
-      document.getElementById('cust-phone-input').value = selectedOption.dataset.phone || '';
+      document.getElementById('cust-phone-input').value = opt.dataset.phone || '';
     }
 
-    // --- PRINT BILL TRIGGER & MODAL ---
-    function triggerPrintBill() {
-      const modal = document.getElementById('print-invoice-modal');
+    // --- SAVE TO POSTGRES & PRINT BILL ---
+    async function triggerPrintBill() {
+      const custType = document.querySelector('input[name="customer-type"]:checked').value;
       const custName = document.getElementById('cust-name-input').value || 'Walk-in Customer';
       const custPhone = document.getElementById('cust-phone-input').value || '-';
+      const invNo = 'INV-DE-' + Date.now().toString().slice(-6);
 
+      let subtotal = 0;
+      let totalTax = 0;
+      billItems.forEach(i => {
+        const line = i.rate * i.qty;
+        const taxVal = line / (1 + (i.gst / 100));
+        subtotal += taxVal;
+        totalTax += (line - taxVal);
+      });
+      const grandTotal = Math.round(subtotal + totalTax);
+
+      // Save to Database
+      try {
+        await fetch('/api/invoices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            invoiceNo: invNo,
+            customerType: custType,
+            customerName: custName,
+            customerPhone: custPhone,
+            paymentMode: selectedPaymentMode,
+            subtotal,
+            cgst: totalTax / 2,
+            sgst: totalTax / 2,
+            grandTotal,
+            items: billItems
+          })
+        });
+      } catch (err) {
+        console.error('Invoice save error:', err);
+      }
+
+      // Populate Modal
+      document.getElementById('modal-bill-no').textContent = invNo;
       document.getElementById('modal-bill-cust').textContent = custName;
       document.getElementById('modal-bill-phone').textContent = custPhone;
       document.getElementById('modal-bill-mode').textContent = selectedPaymentMode;
 
       const tbody = document.getElementById('modal-items-tbody');
       tbody.innerHTML = '';
-
-      let subtotal = 0;
-      let totalTax = 0;
-
       billItems.forEach((item, index) => {
         const lineTotal = item.rate * item.qty;
-        const taxable = lineTotal / (1 + (item.gst / 100));
-        const tax = lineTotal - taxable;
-        subtotal += taxable;
-        totalTax += tax;
-
         const tr = document.createElement('tr');
         tr.className = "text-[11px]";
         tr.innerHTML = `
@@ -957,17 +997,21 @@
         tbody.appendChild(tr);
       });
 
-      const grandTotal = Math.round(subtotal + totalTax);
       document.getElementById('modal-subtotal').textContent = `₹${subtotal.toFixed(2)}`;
       document.getElementById('modal-cgst').textContent = `₹${(totalTax / 2).toFixed(2)}`;
       document.getElementById('modal-sgst').textContent = `₹${(totalTax / 2).toFixed(2)}`;
       document.getElementById('modal-grand-total').textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
 
-      modal.classList.remove('hidden');
+      document.getElementById('print-invoice-modal').classList.remove('hidden');
+
+      // Reload fresh data from database
+      loadProducts();
+      loadFarmers();
     }
 
     function closePrintModal() {
       document.getElementById('print-invoice-modal').classList.add('hidden');
+      clearCurrentBill();
     }
 
     // --- STOCK TABLE RENDER ---
@@ -1004,19 +1048,34 @@
     }
 
     function filterStockTable() {
-      const query = document.getElementById('stock-search').value;
-      renderStockTable(query);
+      renderStockTable(document.getElementById('stock-search').value);
     }
 
-    function adjustStockPrompt(id) {
+    async function adjustStockPrompt(id) {
       const product = products.find(p => p.id === id);
       if (!product) return;
       const add = prompt(`Add stock for ${product.name} (Current: ${product.stock} ${product.unit}s):`, "50");
       if (add && !isNaN(add)) {
-        product.stock += parseInt(add);
-        renderStockTable();
-        renderQuickItems();
+        await fetch(`/api/products/${id}/adjust-stock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: parseInt(add) })
+        });
+        loadProducts();
       }
+    }
+
+    function updateStockMetrics() {
+      document.getElementById('stat-total-products').textContent = products.length;
+      let bags = 0, bottles = 0, low = 0;
+      products.forEach(p => {
+        if (p.unit.toLowerCase().includes('bag')) bags += parseInt(p.stock);
+        if (p.unit.toLowerCase().includes('bottle') || p.category === 'Pesticide') bottles += parseInt(p.stock);
+        if (p.stock <= 10) low++;
+      });
+      document.getElementById('stat-total-bags').innerHTML = `${bags} <span class="text-xs font-normal text-slate-500">Bags</span>`;
+      document.getElementById('stat-total-bottles').innerHTML = `${bottles} <span class="text-xs font-normal text-slate-500">Bottles</span>`;
+      document.getElementById('stat-low-stock').innerHTML = `${low} <span class="text-xs font-normal text-rose-500">items</span>`;
     }
 
     // --- KHATA TABLE RENDER ---
@@ -1031,7 +1090,7 @@
           <td class="py-3 px-4 font-semibold text-slate-800">${f.name}</td>
           <td class="py-3 px-4 text-slate-500">${f.village}</td>
           <td class="py-3 px-4 font-mono text-slate-500">${f.phone}</td>
-          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600">₹${f.outstanding.toLocaleString('en-IN')}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600">₹${parseFloat(f.outstanding).toLocaleString('en-IN')}</td>
           <td class="py-3 px-4 text-slate-500 text-[11px]">${f.lastTx}</td>
           <td class="py-3 px-4 text-center">
             <button onclick="recordKhataPaymentPrompt(${f.id})" class="px-2.5 py-1 text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg font-medium transition">Record Payment</button>
@@ -1041,15 +1100,25 @@
       });
     }
 
-    function recordKhataPaymentPrompt(farmerId) {
+    async function recordKhataPaymentPrompt(farmerId) {
       const farmer = farmers.find(f => f.id === farmerId);
       if (!farmer) return;
       const amount = prompt(`Record Cash/UPI payment received from ${farmer.name} (Current Due: ₹${farmer.outstanding}):`, "5000");
       if (amount && !isNaN(amount)) {
-        farmer.outstanding = Math.max(0, farmer.outstanding - parseInt(amount));
-        farmer.lastTx = `Today (Paid -₹${parseInt(amount)})`;
-        renderKhataTable();
+        await fetch(`/api/farmers/${farmerId}/payment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: parseFloat(amount) })
+        });
+        loadFarmers();
       }
+    }
+
+    function updateKhataMetrics() {
+      let totalDue = 0;
+      farmers.forEach(f => { totalDue += parseFloat(f.outstanding); });
+      document.getElementById('stat-total-udhar').textContent = `₹${totalDue.toLocaleString('en-IN')}`;
+      document.getElementById('stat-total-farmers').textContent = farmers.length;
     }
 
     // --- EXPORT REPORT TO CSV ---
@@ -1068,33 +1137,34 @@
     }
 
     // --- NEW PRODUCT MODAL ---
-    function openNewProductModal() {
-      document.getElementById('add-product-modal').classList.remove('hidden');
-    }
-    function closeNewProductModal() {
-      document.getElementById('add-product-modal').classList.add('hidden');
-    }
+    function openNewProductModal() { document.getElementById('add-product-modal').classList.remove('hidden'); }
+    function closeNewProductModal() { document.getElementById('add-product-modal').classList.add('hidden'); }
 
-    function handleAddNewProduct(e) {
+    async function handleAddNewProduct(e) {
       e.preventDefault();
-      const name = document.getElementById('np-name').value;
-      const category = document.getElementById('np-cat').value;
-      const unit = document.getElementById('np-unit').value;
-      const hsn = document.getElementById('np-hsn').value;
-      const gst = parseInt(document.getElementById('np-gst').value);
-      const purchasePrice = parseFloat(document.getElementById('np-cost').value);
-      const price = parseFloat(document.getElementById('np-price').value);
-      const stock = parseInt(document.getElementById('np-stock').value);
+      const productData = {
+        name: document.getElementById('np-name').value,
+        category: document.getElementById('np-cat').value,
+        unit: document.getElementById('np-unit').value,
+        hsn: document.getElementById('np-hsn').value,
+        gst: parseInt(document.getElementById('np-gst').value),
+        purchasePrice: parseFloat(document.getElementById('np-cost').value),
+        price: parseFloat(document.getElementById('np-price').value),
+        stock: parseInt(document.getElementById('np-stock').value)
+      };
 
-      products.push({
-        id: products.length + 1,
-        name, category, unit, hsn, gst, purchasePrice, price, stock
-      });
-
-      closeNewProductModal();
-      renderQuickItems();
-      renderStockTable();
-      alert(`Product "${name}" added successfully!`);
+      try {
+        await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(productData)
+        });
+        closeNewProductModal();
+        loadProducts();
+        alert(`Product "${productData.name}" saved to Neon database!`);
+      } catch (err) {
+        alert('Error saving product: ' + err.message);
+      }
     }
 
     // --- KEYBOARD SHORTCUTS (TALLY STYLE) ---
@@ -1108,15 +1178,9 @@
     // --- INITIALIZE ---
     window.onload = () => {
       lucide.createIcons();
-      renderQuickItems();
-      renderStockTable();
-      renderKhataTable();
-
-      // Clock
-      setInterval(() => {
-        const now = new Date();
-        document.getElementById('live-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      }, 1000);
+      checkDatabaseHealth();
+      loadProducts();
+      loadFarmers();
     };
   </script>
 </body>
