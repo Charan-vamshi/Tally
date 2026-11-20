@@ -1109,32 +1109,32 @@
     }
 
     async function handleGoogleCredentialResponse(response) {
-      const payload = parseJwt(response.credential);
-      if (!payload || !payload.email) return;
+      if (!response || !response.credential) return;
 
-      const email = payload.email.toLowerCase();
-      const name = payload.given_name || payload.name || 'User';
-      const picture = payload.picture || '';
+      const payload = parseJwt(response.credential);
+      const email = payload && payload.email ? payload.email.toLowerCase() : '';
+      const name = payload && (payload.given_name || payload.name) ? (payload.given_name || payload.name) : 'User';
+      const picture = payload && payload.picture ? payload.picture : '';
 
       try {
         const authRes = await fetch('/api/auth/check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
+          body: JSON.stringify({ credential: response.credential, email })
         });
         const authData = await authRes.json();
 
         if (authData.authorized) {
           currentUser = {
-            email,
-            name: email === 'saicharanreddy344@gmail.com' ? 'Cherry' : name,
+            email: authData.email || email,
+            name: authData.role === 'OWNER' ? 'Cherry' : (authData.name || name),
             role: authData.role, // 'OWNER' or 'MANAGER'
-            picture
+            picture: authData.picture || picture
           };
           sessionStorage.setItem('tally_user', JSON.stringify(currentUser));
           routeUserDashboard();
         } else {
-          showAuthError(`Access Restricted: ${email} is not an authorized vendor. Contact Cherry to obtain access.`);
+          showAuthError(`Access Restricted: ${authData.error || 'Your account is not authorized.'} Contact Cherry to obtain access.`);
         }
       } catch (err) {
         showAuthError('Connection error verifying Google login. Try again.');

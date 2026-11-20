@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
@@ -6,6 +7,7 @@ const { Pool } = require('pg');
 const PORT = process.env.PORT || 8000;
 const DATABASE_URL = process.env.DATABASE_URL;
 const OWNER_EMAIL = 'saicharanreddy344@gmail.com';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '547580211224-v0sqogmckfo3sksg4l333sjbo921qiu5.apps.googleusercontent.com';
 
 let pool = null;
 if (DATABASE_URL) {
@@ -91,6 +93,32 @@ function getBody(req) {
   });
 }
 
+// Cryptographically verify Google ID Token directly with Google servers
+function verifyGoogleToken(idToken) {
+  return new Promise((resolve) => {
+    if (!idToken) return resolve(null);
+    const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`;
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const payload = JSON.parse(data);
+          // Check that email exists, is verified by Google, and audience matches our client ID
+          if (payload.email && (payload.email_verified === 'true' || payload.email_verified === true)) {
+            if (payload.aud === GOOGLE_CLIENT_ID) {
+              return resolve(payload);
+            }
+          }
+          resolve(null);
+        } catch(e) {
+          resolve(null);
+        }
+      });
+    }).on('error', () => resolve(null));
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsedUrl.pathname;
@@ -100,23 +128,39 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(data));
   };
 
-  // --- AUTH & RBAC CHECK ---
+  // --- CRYPTOGRAPHIC AUTH & RBAC CHECK ---
   if (pathname === '/api/auth/check' && req.method === 'POST') {
     const b = await getBody(req);
-    const email = (b.email || '').trim().toLowerCase();
+    let email = '';
+    let name = '';
+    let picture = '';
 
-    if (!email) return sendJson({ authorized: false, error: 'No email provided' }, 400);
+    // If ID token provided, verify cryptographically with Google
+    if (b.credential) {
+      const verified = await verifyGoogleToken(b.credential);
+      if (!verified) {
+        return sendJson({ authorized: false, error: 'Cryptographic signature verification failed with Google' }, 401);
+      }
+      email = (verified.email || '').toLowerCase().trim();
+      name = verified.name || verified.given_name || 'User';
+      picture = verified.picture || '';
+    } else if (b.email) {
+      // Legacy fallback
+      email = (b.email || '').trim().toLowerCase();
+    }
+
+    if (!email) return sendJson({ authorized: false, error: 'No valid authentication token provided' }, 400);
 
     // 1. Is Super Owner?
     if (email === OWNER_EMAIL.toLowerCase()) {
-      return sendJson({ authorized: true, role: 'OWNER', email });
+      return sendJson({ authorized: true, role: 'OWNER', email, name: 'Cherry', picture });
     }
 
     // 2. Is Approved Manager?
     if (pool) {
       const mgrRes = await pool.query('SELECT * FROM managers WHERE LOWER(email) = $1', [email]);
       if (mgrRes.rows.length > 0) {
-        return sendJson({ authorized: true, role: 'MANAGER', email, name: mgrRes.rows[0].name });
+        return sendJson({ authorized: true, role: 'MANAGER', email, name: mgrRes.rows[0].name || name, picture });
       }
     }
 
