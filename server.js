@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 
 const PORT = process.env.PORT || 8000;
 const DATABASE_URL = process.env.DATABASE_URL;
+const OWNER_EMAIL = 'saicharanreddy344@gmail.com';
 
 let pool = null;
 if (DATABASE_URL) {
@@ -14,7 +15,7 @@ if (DATABASE_URL) {
   });
 }
 
-// Auto-create database tables on start (NO MOCK DATA)
+// Auto-create database tables on start
 async function initDatabase() {
   if (!pool) return;
   try {
@@ -60,16 +61,17 @@ async function initDatabase() {
         status VARCHAR(50) DEFAULT 'ACTIVE',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `);
 
-    // Wipe any previously seeded mock items to ensure a 100% clean database
-    await client.query(`
-      DELETE FROM products WHERE name LIKE 'Urea 45kg%' OR name LIKE 'DAP 50kg%' OR name LIKE 'MOP 50kg%' OR name LIKE 'Coragen%' OR name LIKE 'Confidor%' OR name LIKE 'Roundup%' OR name LIKE 'Zinc Sulphate%';
-      DELETE FROM farmers WHERE name IN ('Ramesh Gowda', 'Suresh Patil', 'Basavaraj K', 'Mallikarjun Hiremath', 'Ningappa Doddamani');
+      CREATE TABLE IF NOT EXISTS managers (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        name VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     client.release();
-    console.log('Database tables ready and clean.');
+    console.log('Database tables ready.');
   } catch (err) {
     console.error('Database initialization error:', err.message);
   }
@@ -98,13 +100,61 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(data));
   };
 
-  // --- API ROUTES ---
+  // --- AUTH & RBAC CHECK ---
+  if (pathname === '/api/auth/check' && req.method === 'POST') {
+    const b = await getBody(req);
+    const email = (b.email || '').trim().toLowerCase();
+
+    if (!email) return sendJson({ authorized: false, error: 'No email provided' }, 400);
+
+    // 1. Is Super Owner?
+    if (email === OWNER_EMAIL.toLowerCase()) {
+      return sendJson({ authorized: true, role: 'OWNER', email });
+    }
+
+    // 2. Is Approved Manager?
+    if (pool) {
+      const mgrRes = await pool.query('SELECT * FROM managers WHERE LOWER(email) = $1', [email]);
+      if (mgrRes.rows.length > 0) {
+        return sendJson({ authorized: true, role: 'MANAGER', email, name: mgrRes.rows[0].name });
+      }
+    }
+
+    // 3. Unauthorized
+    return sendJson({ authorized: false, error: 'Unauthorized email account' }, 403);
+  }
+
+  // --- MANAGER MANAGEMENT (OWNER ONLY) ---
+  if (pathname === '/api/managers' && req.method === 'GET') {
+    if (!pool) return sendJson([]);
+    const r = await pool.query('SELECT id, email, name, created_at FROM managers ORDER BY id DESC');
+    return sendJson(r.rows);
+  }
+
+  if (pathname === '/api/managers' && req.method === 'POST') {
+    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const b = await getBody(req);
+    const email = (b.email || '').trim().toLowerCase();
+    if (!email) return sendJson({ error: 'Email is required' }, 400);
+
+    try {
+      const r = await pool.query('INSERT INTO managers (email, name) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING RETURNING *', [email, b.name || 'Store Manager']);
+      return sendJson(r.rows[0] || { message: 'Already exists' }, 201);
+    } catch (err) {
+      return sendJson({ error: err.message }, 500);
+    }
+  }
+
+  if (pathname.match(/^\/api\/managers\/(\d+)$/) && req.method === 'DELETE') {
+    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const id = pathname.split('/')[3];
+    await pool.query('DELETE FROM managers WHERE id = $1', [id]);
+    return sendJson({ success: true });
+  }
 
   // Health / Connection Check
   if (pathname === '/api/health') {
-    if (!pool) {
-      return sendJson({ status: 'warning', database: 'No DATABASE_URL configured' });
-    }
+    if (!pool) return sendJson({ status: 'warning', database: 'No DATABASE_URL configured' });
     try {
       const dbRes = await pool.query('SELECT NOW() as db_time, current_database() as db_name;');
       return sendJson({
@@ -170,7 +220,7 @@ const server = http.createServer(async (req, res) => {
     return sendJson(r.rows[0]);
   }
 
-  // GET Invoices & Summary Reports
+  // GET Invoices
   if (pathname === '/api/invoices' && req.method === 'GET') {
     if (!pool) return sendJson([]);
     const r = await pool.query('SELECT * FROM invoices ORDER BY id DESC LIMIT 50');
