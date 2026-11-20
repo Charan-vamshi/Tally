@@ -420,3 +420,19 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Dattareya Enterprises Server running on port ${PORT}`);
 });
+
+// Graceful shutdown to prevent Render false-alarm exit 1 alerts during deploys
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, shutting down cleanly.');
+  server.close(() => {
+    if (pool) pool.end();
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  server.close(() => {
+    if (pool) pool.end();
+    process.exit(0);
+  });
+});
