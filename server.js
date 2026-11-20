@@ -307,6 +307,61 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // DELETE / Cancel Unwanted Invoice & Reverse Stock + Khata
+  if (pathname.startsWith('/api/invoices/') && req.method === 'DELETE') {
+    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const parts = pathname.split('/');
+    const id = parseInt(parts[3]);
+    if (!id) return sendJson({ error: 'Invalid invoice ID' }, 400);
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const invRes = await client.query('SELECT * FROM invoices WHERE id = $1 FOR UPDATE', [id]);
+      if (invRes.rows.length === 0) {
+        await client.query('ROLLBACK');
+        client.release();
+        return sendJson({ error: 'Invoice not found' }, 404);
+      }
+
+      const inv = invRes.rows[0];
+      if (inv.status === 'CANCELLED') {
+        await client.query('ROLLBACK');
+        client.release();
+        return sendJson({ error: 'Invoice is already cancelled' }, 400);
+      }
+
+      // 1. Mark status as CANCELLED
+      await client.query("UPDATE invoices SET status = 'CANCELLED' WHERE id = $1", [id]);
+
+      // 2. Reverse stock deductions back to products
+      const items = Array.isArray(inv.items) ? inv.items : JSON.parse(inv.items || '[]');
+      for (const item of items) {
+        if (item.id && item.qty) {
+          await client.query('UPDATE products SET stock = stock + $1 WHERE id = $2', [item.qty, item.id]);
+        }
+      }
+
+      // 3. Reverse Khata debt if this was an Udhar bill
+      if (inv.payment_mode === 'Credit' && inv.customer_type === 'khata') {
+        const revertTx = `Bill ${inv.invoice_no} Cancelled (-₹${inv.grand_total})`;
+        await client.query(
+          'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE name = $3',
+          [inv.grand_total, revertTx, inv.customer_name]
+        );
+      }
+
+      await client.query('COMMIT');
+      client.release();
+      return sendJson({ success: true, message: `Invoice ${inv.invoice_no} cancelled. Stock and Khata reversed successfully.` });
+    } catch (e) {
+      await client.query('ROLLBACK');
+      client.release();
+      return sendJson({ error: e.message }, 500);
+    }
+  }
+
   // GET Real Reports
   if (pathname === '/api/reports' && req.method === 'GET') {
     if (!pool) return sendJson({ totalSales: 0, totalGst: 0, cash: 0, upi: 0, card: 0, credit: 0, count: 0 });
