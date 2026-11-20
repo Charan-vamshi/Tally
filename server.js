@@ -14,12 +14,12 @@ if (DATABASE_URL) {
   });
 }
 
-// Auto-create database tables on start
+// Auto-create database tables on start (NO MOCK DATA)
 async function initDatabase() {
   if (!pool) return;
   try {
     const client = await pool.connect();
-    console.log('Connected to PostgreSQL successfully.');
+    console.log('Connected to PostgreSQL.');
     
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
@@ -57,41 +57,19 @@ async function initDatabase() {
         sgst NUMERIC(12, 2) NOT NULL,
         grand_total NUMERIC(12, 2) NOT NULL,
         items JSONB NOT NULL,
+        status VARCHAR(50) DEFAULT 'ACTIVE',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    // Seed default fertilizer/pesticide products if empty
-    const productCount = await client.query('SELECT count(*) FROM products');
-    if (parseInt(productCount.rows[0].count) === 0) {
-      await client.query(`
-        INSERT INTO products (name, category, unit, hsn, gst, purchase_price, price, stock) VALUES
-        ('Urea 45kg (Neem Coated)', 'Fertilizer', 'Bag', '3102', 5, 242.00, 266.00, 450),
-        ('DAP 50kg (Di-Ammonium)', 'Fertilizer', 'Bag', '3105', 5, 1250.00, 1350.00, 180),
-        ('MOP 50kg (Potash)', 'Fertilizer', 'Bag', '3104', 5, 1600.00, 1700.00, 85),
-        ('Coragen 60ml (FMC)', 'Pesticide', 'Bottle', '3808', 18, 820.00, 920.00, 42),
-        ('Confidor 100ml (Bayer)', 'Pesticide', 'Bottle', '3808', 18, 410.00, 470.00, 6),
-        ('Roundup 1L (Herbicide)', 'Pesticide', 'Bottle', '3808', 18, 480.00, 540.00, 55),
-        ('Zinc Sulphate 21% 10kg', 'Fertilizer', 'Bag', '2833', 12, 380.00, 440.00, 4);
-      `);
-      console.log('Seeded default products.');
-    }
-
-    // Seed default farmers if empty
-    const farmerCount = await client.query('SELECT count(*) FROM farmers');
-    if (parseInt(farmerCount.rows[0].count) === 0) {
-      await client.query(`
-        INSERT INTO farmers (name, village, phone, outstanding, last_tx) VALUES
-        ('Ramesh Gowda', 'Hosur', '9448123456', 24500.00, '18-Nov-2026 (Udhar +₹4,800)'),
-        ('Suresh Patil', 'Mallapur', '9880987654', 12800.00, '15-Nov-2026 (Paid -₹10,000)'),
-        ('Basavaraj K', 'Bableshwar', '9741238910', 48000.00, '12-Nov-2026 (Udhar +₹18,500)'),
-        ('Mallikarjun Hiremath', 'Teggi', '9448554433', 6400.00, '20-Nov-2026 (Paid -₹5,000)'),
-        ('Ningappa Doddamani', 'Kukanur', '9845112233', 31200.00, '04-Nov-2026 (Udhar +₹8,200)');
-      `);
-      console.log('Seeded default farmers.');
-    }
+    // Wipe any previously seeded mock items to ensure a 100% clean database
+    await client.query(`
+      DELETE FROM products WHERE name LIKE 'Urea 45kg%' OR name LIKE 'DAP 50kg%' OR name LIKE 'MOP 50kg%' OR name LIKE 'Coragen%' OR name LIKE 'Confidor%' OR name LIKE 'Roundup%' OR name LIKE 'Zinc Sulphate%';
+      DELETE FROM farmers WHERE name IN ('Ramesh Gowda', 'Suresh Patil', 'Basavaraj K', 'Mallikarjun Hiremath', 'Ningappa Doddamani');
+    `);
 
     client.release();
+    console.log('Database tables ready and clean.');
   } catch (err) {
     console.error('Database initialization error:', err.message);
   }
@@ -115,7 +93,6 @@ const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsedUrl.pathname;
 
-  // JSON Response helper
   const sendJson = (data, status = 200) => {
     res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(data));
@@ -126,7 +103,7 @@ const server = http.createServer(async (req, res) => {
   // Health / Connection Check
   if (pathname === '/api/health') {
     if (!pool) {
-      return sendJson({ status: 'warning', database: 'No DATABASE_URL configured yet' });
+      return sendJson({ status: 'warning', database: 'No DATABASE_URL configured' });
     }
     try {
       const dbRes = await pool.query('SELECT NOW() as db_time, current_database() as db_name;');
@@ -143,8 +120,8 @@ const server = http.createServer(async (req, res) => {
 
   // GET Products
   if (pathname === '/api/products' && req.method === 'GET') {
-    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
-    const r = await pool.query('SELECT id, name, category, unit, hsn, gst, purchase_price as "purchasePrice", price, stock FROM products ORDER BY id ASC');
+    if (!pool) return sendJson([]);
+    const r = await pool.query('SELECT id, name, category, unit, hsn, gst, purchase_price as "purchasePrice", price, stock FROM products ORDER BY id DESC');
     return sendJson(r.rows);
   }
 
@@ -162,15 +139,24 @@ const server = http.createServer(async (req, res) => {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
     const id = pathname.split('/')[3];
     const b = await getBody(req);
-    const r = await pool.query('UPDATE products SET stock = stock + $1 WHERE id = $2 RETURNING *', [parseInt(b.amount || 0), id]);
+    const r = await pool.query('UPDATE products SET stock = GREATEST(0, stock + $1) WHERE id = $2 RETURNING *', [parseInt(b.amount || 0), id]);
     return sendJson(r.rows[0]);
   }
 
   // GET Farmers
   if (pathname === '/api/farmers' && req.method === 'GET') {
-    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
-    const r = await pool.query('SELECT id, name, village, phone, outstanding, last_tx as "lastTx" FROM farmers ORDER BY id ASC');
+    if (!pool) return sendJson([]);
+    const r = await pool.query('SELECT id, name, village, phone, outstanding, last_tx as "lastTx" FROM farmers ORDER BY id DESC');
     return sendJson(r.rows);
+  }
+
+  // POST Create Farmer
+  if (pathname === '/api/farmers' && req.method === 'POST') {
+    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const b = await getBody(req);
+    const q = `INSERT INTO farmers (name, village, phone, outstanding, last_tx) VALUES ($1,$2,$3,$4,$5) RETURNING *`;
+    const r = await pool.query(q, [b.name, b.village || '', b.phone || '', parseFloat(b.outstanding || 0), 'Account Opened']);
+    return sendJson(r.rows[0], 201);
   }
 
   // POST Farmer Repayment
@@ -184,7 +170,14 @@ const server = http.createServer(async (req, res) => {
     return sendJson(r.rows[0]);
   }
 
-  // POST Save Invoice (Deducts stock automatically & updates Khata if Udhar)
+  // GET Invoices & Summary Reports
+  if (pathname === '/api/invoices' && req.method === 'GET') {
+    if (!pool) return sendJson([]);
+    const r = await pool.query('SELECT * FROM invoices ORDER BY id DESC LIMIT 50');
+    return sendJson(r.rows);
+  }
+
+  // POST Save Invoice
   if (pathname === '/api/invoices' && req.method === 'POST') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
     const b = await getBody(req);
@@ -201,12 +194,10 @@ const server = http.createServer(async (req, res) => {
         b.paymentMode, b.subtotal, b.cgst, b.sgst, b.grandTotal, JSON.stringify(b.items)
       ]);
 
-      // Deduct stock for each item
       for (const item of b.items) {
         await client.query('UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2', [item.qty, item.id]);
       }
 
-      // If Udhar (Credit), update farmer balance
       if (b.paymentMode === 'Credit' && b.customerType === 'khata') {
         const lastTx = `Today (Udhar +₹${b.grandTotal})`;
         await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3', [b.grandTotal, lastTx, b.customerName]);
@@ -220,6 +211,32 @@ const server = http.createServer(async (req, res) => {
       client.release();
       return sendJson({ error: e.message }, 500);
     }
+  }
+
+  // GET Real Reports
+  if (pathname === '/api/reports' && req.method === 'GET') {
+    if (!pool) return sendJson({ totalSales: 0, totalGst: 0, cash: 0, upi: 0, card: 0, credit: 0, count: 0 });
+    const invRes = await pool.query(`
+      SELECT 
+        COALESCE(SUM(grand_total), 0) as total_sales,
+        COALESCE(SUM(cgst + sgst), 0) as total_gst,
+        COALESCE(SUM(CASE WHEN payment_mode = 'Cash' THEN grand_total ELSE 0 END), 0) as cash,
+        COALESCE(SUM(CASE WHEN payment_mode = 'UPI' THEN grand_total ELSE 0 END), 0) as upi,
+        COALESCE(SUM(CASE WHEN payment_mode = 'Card' THEN grand_total ELSE 0 END), 0) as card,
+        COALESCE(SUM(CASE WHEN payment_mode = 'Credit' THEN grand_total ELSE 0 END), 0) as credit,
+        COUNT(*) as count
+      FROM invoices WHERE status = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE;
+    `);
+    const row = invRes.rows[0];
+    return sendJson({
+      totalSales: parseFloat(row.total_sales),
+      totalGst: parseFloat(row.total_gst),
+      cash: parseFloat(row.cash),
+      upi: parseFloat(row.upi),
+      card: parseFloat(row.card),
+      credit: parseFloat(row.credit),
+      count: parseInt(row.count)
+    });
   }
 
   // --- STATIC FILE SERVING ---

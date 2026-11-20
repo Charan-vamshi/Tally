@@ -39,14 +39,12 @@
     body { font-family: 'Inter', sans-serif; }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
     
-    /* Global smooth color transition */
     *, *::before, *::after {
       transition-property: background-color, border-color, color, fill, stroke;
       transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       transition-duration: 200ms;
     }
 
-    /* Smooth tab transition */
     .tab-content {
       transition: opacity 0.25s ease-out, transform 0.25s ease-out;
     }
@@ -61,7 +59,6 @@
       transform: translateY(0);
     }
 
-    /* Print styles: Always clean white for A4 printer */
     @media print {
       body * { visibility: hidden; }
       #print-invoice-modal, #print-invoice-modal * { visibility: visible; }
@@ -82,7 +79,7 @@
     }
   </style>
 
-  <!-- Automatic Sun/Sunset Theme Detection Script (Runs before render to prevent flash) -->
+  <!-- Sun/Sunset Theme Detection -->
   <script>
     (function() {
       const savedTheme = localStorage.getItem('theme');
@@ -90,14 +87,10 @@
         if (savedTheme === 'dark') document.documentElement.classList.add('dark');
         else document.documentElement.classList.remove('dark');
       } else {
-        // Auto time-based: 06:00 to 18:00 is Light (Daytime), 18:00 to 06:00 is Dark (Night)
         const hour = new Date().getHours();
         const isDaytime = hour >= 6 && hour < 18;
-        if (!isDaytime) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
+        if (!isDaytime) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
       }
     })();
   </script>
@@ -126,17 +119,13 @@
         <!-- Controls: Dark Mode Toggle + DB Status + Add Product -->
         <div class="flex items-center gap-3">
           
-          <!-- Database Status Badge -->
           <div id="db-status-badge" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
             <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
             <span id="db-status-text">Checking DB...</span>
           </div>
 
-          <!-- Smooth Theme Switcher Component -->
-          <button id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode (Auto Sun-Synced)" class="relative p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-center group shadow-sm">
-            <!-- Sun Icon (shown in dark mode) -->
+          <button id="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" class="relative p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-center group shadow-sm">
             <i id="theme-sun-icon" data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400 group-hover:rotate-45 transition-transform duration-300"></i>
-            <!-- Moon Icon (shown in light mode) -->
             <i id="theme-moon-icon" data-lucide="moon" class="w-4 h-4 block dark:hidden text-slate-700 group-hover:-rotate-12 transition-transform duration-300"></i>
           </button>
 
@@ -221,9 +210,12 @@
 
             <!-- Khata Farmer Quick Picker -->
             <div id="khata-picker-div" class="hidden mt-3 pt-3 border-t border-dashed border-slate-200 dark:border-slate-800">
-              <label class="block text-xs font-medium text-emerald-800 dark:text-emerald-400 mb-1">Select Registered Farmer:</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-medium text-emerald-800 dark:text-emerald-400">Select Registered Farmer:</label>
+                <button type="button" onclick="openNewFarmerModal()" class="text-xs text-emerald-600 dark:text-emerald-400 hover:underline font-medium">+ Register New</button>
+              </div>
               <select id="farmer-dropdown" onchange="selectKhataFarmer(this.value)" class="w-full px-3 py-2 text-sm bg-emerald-50/50 dark:bg-slate-800 border border-emerald-200 dark:border-slate-700 rounded-lg text-emerald-950 dark:text-emerald-300 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="">-- Choose Farmer from Khata --</option>
+                <option value="">-- No farmers registered yet. Click '+ Register New' --</option>
               </select>
             </div>
           </div>
@@ -231,16 +223,21 @@
           <!-- Quick Product Items Selector -->
           <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
             <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Quick Items / Tap to Add</span>
-              <div class="relative w-48 sm:w-64">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5"></i>
-                <input type="text" id="quick-item-search" oninput="filterQuickItems()" placeholder="Search product..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Products for Billing</span>
+              <div class="flex items-center gap-2">
+                <div class="relative w-40 sm:w-56">
+                  <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5"></i>
+                  <input type="text" id="quick-item-search" oninput="filterQuickItems()" placeholder="Search product..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <button onclick="openNewProductModal()" class="px-2.5 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition flex items-center gap-1">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add
+                </button>
               </div>
             </div>
 
-            <!-- Fast Tap Items Grid -->
+            <!-- Tap Items Grid -->
             <div id="quick-items-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1">
-              <!-- Rendered by JS -->
+              <!-- Rendered by JS or shows empty state -->
             </div>
           </div>
 
@@ -250,10 +247,9 @@
         <div class="lg:col-span-5 space-y-4">
           <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full">
             
-            <!-- Bill Card Header -->
             <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 rounded-t-xl">
               <div>
-                <span id="bill-inv-number" class="text-xs font-bold font-mono text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded">INV-DE-2026-0042</span>
+                <span id="bill-inv-number" class="text-xs font-bold font-mono text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded">NEW INVOICE</span>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Tax Invoice (Intra-state GST)</p>
               </div>
               <button onclick="clearCurrentBill()" class="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 font-medium flex items-center gap-1">
@@ -279,7 +275,7 @@
               </table>
               <div id="empty-cart-msg" class="py-12 text-center text-slate-400 dark:text-slate-600">
                 <i data-lucide="shopping-cart" class="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600"></i>
-                <p class="text-xs">No items in bill yet. Tap items on the left to add.</p>
+                <p class="text-xs">No items in bill yet. Tap products on the left to add.</p>
               </div>
             </div>
 
@@ -315,10 +311,9 @@
                 </div>
               </div>
 
-              <!-- Print & Save Action Button -->
               <button onclick="triggerPrintBill()" id="btn-save-print" disabled class="w-full py-3 bg-emerald-600 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 hover:bg-emerald-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 transition-all text-sm">
                 <i data-lucide="printer" class="w-4 h-4"></i>
-                <span>Save to Neon & Print A4 Bill</span>
+                <span>Save to Database & Print Bill</span>
               </button>
             </div>
 
@@ -338,23 +333,23 @@
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Products</p>
-          <p id="stat-total-products" class="text-2xl font-bold text-slate-900 dark:text-white font-mono mt-1">7</p>
+          <p id="stat-total-products" class="text-2xl font-bold text-slate-900 dark:text-white font-mono mt-1">0</p>
           <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Synced with PostgreSQL</span>
         </div>
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Fertilizer Bags in Stock</p>
-          <p id="stat-total-bags" class="text-2xl font-bold text-emerald-700 dark:text-emerald-400 font-mono mt-1">719 <span class="text-xs font-normal text-slate-500 dark:text-slate-400">Bags</span></p>
-          <span class="text-[11px] text-slate-500 dark:text-slate-400">Urea, DAP, Potash</span>
+          <p id="stat-total-bags" class="text-2xl font-bold text-emerald-700 dark:text-emerald-400 font-mono mt-1">0 <span class="text-xs font-normal text-slate-500 dark:text-slate-400">Bags</span></p>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">Active Stock</span>
         </div>
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Pesticides (Liquid)</p>
-          <p id="stat-total-bottles" class="text-2xl font-bold text-indigo-700 dark:text-indigo-400 font-mono mt-1">103 <span class="text-xs font-normal text-slate-500 dark:text-slate-400">Bottles</span></p>
-          <span class="text-[11px] text-slate-500 dark:text-slate-400">FMC, Bayer, Herbicides</span>
+          <p id="stat-total-bottles" class="text-2xl font-bold text-indigo-700 dark:text-indigo-400 font-mono mt-1">0 <span class="text-xs font-normal text-slate-500 dark:text-slate-400">Units</span></p>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">Active Stock</span>
         </div>
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/30 dark:bg-rose-950/20 shadow-sm">
           <p class="text-xs font-medium text-rose-700 dark:text-rose-400">Low Stock Alert</p>
-          <p id="stat-low-stock" class="text-2xl font-bold text-rose-600 dark:text-rose-400 font-mono mt-1">2 <span class="text-xs font-normal text-rose-500 dark:text-rose-400">items</span></p>
-          <span class="text-[11px] text-rose-600 dark:text-rose-400 font-medium">Re-order required</span>
+          <p id="stat-low-stock" class="text-2xl font-bold text-rose-600 dark:text-rose-400 font-mono mt-1">0 <span class="text-xs font-normal text-rose-500 dark:text-rose-400">items</span></p>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">Threshold: &le;10 units</span>
         </div>
       </div>
 
@@ -363,7 +358,7 @@
         <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <span class="text-sm font-bold text-slate-900 dark:text-white">Current Stock Master</span>
-            <span class="text-xs bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full font-mono">Postgres Auto-Sync</span>
+            <span class="text-xs bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full font-mono">Neon Live</span>
           </div>
           <div class="flex items-center gap-2">
             <div class="relative">
@@ -371,7 +366,7 @@
               <input type="text" id="stock-search" oninput="filterStockTable()" placeholder="Search stock..." class="pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
             </div>
             <button onclick="openNewProductModal()" class="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1 transition">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Stock
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add New Product
             </button>
           </div>
         </div>
@@ -391,7 +386,7 @@
               </tr>
             </thead>
             <tbody id="stock-table-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
-              <!-- Populated by JS -->
+              <!-- Rendered by JS -->
             </tbody>
           </table>
         </div>
@@ -409,18 +404,18 @@
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/20 shadow-sm">
           <p class="text-xs font-medium text-rose-700 dark:text-rose-400">Total Udhar / Receivables</p>
-          <p id="stat-total-udhar" class="text-2xl font-bold text-rose-600 dark:text-rose-400 font-mono mt-1">₹1,22,900</p>
+          <p id="stat-total-udhar" class="text-2xl font-bold text-rose-600 dark:text-rose-400 font-mono mt-1">₹0.00</p>
           <span class="text-[11px] text-slate-500 dark:text-slate-400">From registered farmers</span>
         </div>
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/20 dark:bg-emerald-950/20 shadow-sm">
           <p class="text-xs font-medium text-emerald-700 dark:text-emerald-400">Today's Udhar Collection</p>
-          <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono mt-1">₹45,000</p>
-          <span class="text-[11px] text-emerald-600 dark:text-emerald-400">Saved to database</span>
+          <p id="stat-today-collection" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono mt-1">₹0.00</p>
+          <span class="text-[11px] text-emerald-600 dark:text-emerald-400">Live payments received</span>
         </div>
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Active Farmers Directory</p>
-          <p id="stat-total-farmers" class="text-2xl font-bold text-slate-900 dark:text-white font-mono mt-1">5</p>
-          <span class="text-[11px] text-slate-500 dark:text-slate-400">Across local villages</span>
+          <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Active Farmers in Khata</p>
+          <p id="stat-total-farmers" class="text-2xl font-bold text-slate-900 dark:text-white font-mono mt-1">0</p>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">Registered customers</span>
         </div>
       </div>
 
@@ -429,8 +424,11 @@
         <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <span class="text-sm font-bold text-slate-900 dark:text-white">Farmer Khata Ledger</span>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Select any farmer to record Cash/UPI payment towards outstanding Udhar.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Record payments or track farmer outstanding balances.</p>
           </div>
+          <button onclick="openNewFarmerModal()" class="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1 transition">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Register Farmer
+          </button>
         </div>
 
         <div class="overflow-x-auto">
@@ -446,7 +444,7 @@
               </tr>
             </thead>
             <tbody id="khata-table-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
-              <!-- Populated by JS -->
+              <!-- Rendered by JS -->
             </tbody>
           </table>
         </div>
@@ -460,11 +458,10 @@
     <!-- ========================================================================= -->
     <div id="tab-reports" class="tab-content hidden-tab space-y-6">
       
-      <!-- Report Header -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
-          <h2 class="text-sm font-bold text-slate-900 dark:text-white">Daily Sales & GST Tax Register</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Automated breakdown for filing GSTR-1 and internal accounts.</p>
+          <h2 class="text-sm font-bold text-slate-900 dark:text-white">Daily Sales & Tax Register</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Real-time revenue, GST breakdown, and collection metrics.</p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="exportReportToCSV()" class="px-3 py-2 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1.5 transition shadow-sm">
@@ -474,33 +471,24 @@
         </div>
       </div>
 
-      <!-- Tax Slab Summary -->
+      <!-- Real Summary Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Fertilizers (5% GST Slab)</span>
-            <span class="text-[10px] font-mono px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-full font-bold">5% GST</span>
-          </div>
-          <p class="text-xl font-bold text-slate-900 dark:text-white font-mono mt-2">₹1,14,500</p>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Tax collected: <span class="font-mono text-emerald-600 dark:text-emerald-400">₹5,725</span> (CGST 2.5% + SGST 2.5%)</p>
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Today's Total Billing</span>
+          <p id="report-total-sales" class="text-xl font-bold text-slate-900 dark:text-white font-mono mt-2">₹0.00</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Invoices generated: <span id="report-invoice-count" class="font-mono text-emerald-600 font-bold">0</span></p>
         </div>
 
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Pesticides (18% GST Slab)</span>
-            <span class="text-[10px] font-mono px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-full font-bold">18% GST</span>
-          </div>
-          <p class="text-xl font-bold text-slate-900 dark:text-white font-mono mt-2">₹48,200</p>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Tax collected: <span class="font-mono text-indigo-600 dark:text-indigo-400">₹8,676</span> (CGST 9% + SGST 9%)</p>
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total GST Collected</span>
+          <p id="report-total-gst" class="text-xl font-bold text-slate-900 dark:text-white font-mono mt-2">₹0.00</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">CGST + SGST Combined</p>
         </div>
 
         <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Today's Billing</span>
-            <span class="text-[10px] font-mono px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full font-bold">24 Bills</span>
-          </div>
-          <p class="text-xl font-bold text-slate-900 dark:text-white font-mono mt-2">₹1,62,700</p>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Total GST: <span class="font-mono text-slate-900 dark:text-white font-semibold">₹14,401</span></p>
+          <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Udhar Given Today</span>
+          <p id="report-credit-sales" class="text-xl font-bold text-rose-600 dark:text-rose-400 font-mono mt-2">₹0.00</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Added to Farmer Khatas</p>
         </div>
       </div>
 
@@ -510,12 +498,11 @@
 
 
   <!-- ========================================================================= -->
-  <!-- A4 PRINTABLE TALLY INVOICE MODAL (Always clean White Paper) -->
+  <!-- A4 PRINTABLE TALLY INVOICE MODAL -->
   <!-- ========================================================================= -->
   <div id="print-invoice-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white text-slate-900 rounded-xl max-w-3xl w-full p-6 shadow-2xl relative my-8 print:m-0 print:p-0 print:shadow-none print:w-full">
       
-      <!-- Close & Print Controls -->
       <div class="no-print flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
         <div class="flex items-center gap-2">
           <span class="text-sm font-bold text-slate-900">A4 Tally-Style Bill Preview</span>
@@ -531,10 +518,9 @@
         </div>
       </div>
 
-      <!-- ACTUAL BILL TEMPLATE (A4 Standard) -->
+      <!-- BILL TEMPLATE -->
       <div class="border-2 border-slate-900 p-4 font-sans text-xs text-slate-900 leading-normal bg-white">
         
-        <!-- Header -->
         <div class="text-center pb-3 border-b-2 border-slate-900">
           <h2 class="text-lg font-extrabold tracking-wide uppercase">Dattareya Enterprises</h2>
           <p class="text-[11px] font-semibold">Wholesale & Retail Dealers in Fertilizers, Pesticides & Seeds</p>
@@ -546,21 +532,19 @@
           Tax Invoice
         </div>
 
-        <!-- Meta Details (Two Columns) -->
         <div class="grid grid-cols-2 border-b border-slate-900 text-[11px]">
           <div class="p-2 border-r border-slate-900 space-y-0.5">
-            <p><strong>Invoice No:</strong> <span id="modal-bill-no" class="font-mono">INV-DE-2026-0042</span></p>
+            <p><strong>Invoice No:</strong> <span id="modal-bill-no" class="font-mono">INV-DE-0001</span></p>
             <p><strong>Date:</strong> <span id="modal-bill-date">20-Nov-2026</span></p>
             <p><strong>Payment Mode:</strong> <span id="modal-bill-mode" class="font-semibold uppercase">Cash</span></p>
           </div>
           <div class="p-2 space-y-0.5">
-            <p><strong>Buyer / Farmer Name:</strong> <span id="modal-bill-cust">Ramesh Gowda</span></p>
-            <p><strong>Village / Address:</strong> <span id="modal-bill-village">Hosur</span></p>
-            <p><strong>Mobile:</strong> <span id="modal-bill-phone" class="font-mono">9448123456</span></p>
+            <p><strong>Buyer / Farmer Name:</strong> <span id="modal-bill-cust">Walk-in Customer</span></p>
+            <p><strong>Village / Address:</strong> <span id="modal-bill-village">-</span></p>
+            <p><strong>Mobile:</strong> <span id="modal-bill-phone" class="font-mono">-</span></p>
           </div>
         </div>
 
-        <!-- Items Table -->
         <table class="w-full text-left border-collapse border-b border-slate-900 text-[11px]">
           <thead>
             <tr class="border-b border-slate-900 bg-slate-50 font-bold">
@@ -574,11 +558,9 @@
             </tr>
           </thead>
           <tbody id="modal-items-tbody" class="divide-y divide-slate-300">
-            <!-- Injected by JS -->
           </tbody>
         </table>
 
-        <!-- Tax Breakdown & Grand Total -->
         <div class="grid grid-cols-12 border-b border-slate-900 text-[11px]">
           <div class="col-span-7 p-2 border-r border-slate-900">
             <p class="font-bold mb-1">Terms & Conditions:</p>
@@ -608,7 +590,6 @@
           </div>
         </div>
 
-        <!-- Footer Signatures -->
         <div class="grid grid-cols-2 pt-6 text-[10px]">
           <div>
             <p>Customer Signature</p>
@@ -651,7 +632,7 @@
           </div>
           <div>
             <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Unit</label>
-            <input type="text" id="np-unit" required value="Bag" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+            <input type="text" id="np-unit" required value="Bag" placeholder="Bag / Bottle / Kg" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
@@ -672,33 +653,66 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Purchase Price (₹)</label>
-            <input type="number" id="np-cost" required value="240" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+            <input type="number" step="0.01" id="np-cost" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
           </div>
           <div>
             <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Selling Price (₹)</label>
-            <input type="number" id="np-price" required value="266" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+            <input type="number" step="0.01" id="np-price" required placeholder="0.00" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
           </div>
         </div>
         <div>
           <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Stock Quantity</label>
-          <input type="number" id="np-stock" required value="50" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+          <input type="number" id="np-stock" required value="0" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
         </div>
         <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition mt-2">
-          Save Product to Neon Database
+          Save Product to Database
         </button>
       </form>
     </div>
   </div>
 
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- ========================================================================= -->
+  <!-- REGISTER NEW FARMER MODAL -->
+  <!-- ========================================================================= -->
+  <div id="add-farmer-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Register New Farmer for Khata</h3>
+        <button onclick="closeNewFarmerModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <form onsubmit="handleAddNewFarmer(event)" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Farmer Full Name</label>
+          <input type="text" id="nf-name" required placeholder="e.g., Ramesh Gowda" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Village / Address</label>
+          <input type="text" id="nf-village" placeholder="e.g., Hosur" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Mobile Number</label>
+          <input type="tel" id="nf-phone" placeholder="9876543210" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Outstanding Udhar (₹, if any)</label>
+          <input type="number" step="0.01" id="nf-due" value="0" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition mt-2">
+          Register Farmer to Khata
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- JAVASCRIPT LOGIC (CLEAN SLATE) -->
   <script>
     let products = [];
     let farmers = [];
     let billItems = [];
     let selectedPaymentMode = 'Cash';
 
-    // --- SMOOTH THEME TOGGLE (MANUAL + TIME-BASED AUTO) ---
     function toggleTheme() {
       const isDark = document.documentElement.classList.contains('dark');
       if (isDark) {
@@ -711,7 +725,6 @@
       lucide.createIcons();
     }
 
-    // --- CHECK DATABASE HEALTH ---
     async function checkDatabaseHealth() {
       const badge = document.getElementById('db-status-badge');
       const text = document.getElementById('db-status-text');
@@ -732,38 +745,46 @@
       }
     }
 
-    // --- FETCH PRODUCTS FROM POSTGRES ---
     async function loadProducts() {
       try {
         const res = await fetch('/api/products');
-        if (res.ok) {
-          products = await res.json();
-        }
-      } catch (err) {
-        console.warn('Using local fallback for products:', err);
-      }
+        if (res.ok) products = await res.json();
+      } catch (err) { products = []; }
       renderQuickItems();
       renderStockTable();
       updateStockMetrics();
     }
 
-    // --- FETCH FARMERS FROM POSTGRES ---
     async function loadFarmers() {
       try {
         const res = await fetch('/api/farmers');
-        if (res.ok) {
-          farmers = await res.json();
-        }
-      } catch (err) {
-        console.warn('Using local fallback for farmers:', err);
-      }
+        if (res.ok) farmers = await res.json();
+      } catch (err) { farmers = []; }
       renderKhataTable();
       populateFarmerDropdown();
       updateKhataMetrics();
     }
 
+    async function loadReports() {
+      try {
+        const res = await fetch('/api/reports');
+        if (res.ok) {
+          const rep = await res.json();
+          document.getElementById('report-total-sales').textContent = `₹${rep.totalSales.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+          document.getElementById('report-total-gst').textContent = `₹${rep.totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+          document.getElementById('report-credit-sales').textContent = `₹${rep.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+          document.getElementById('report-invoice-count').textContent = rep.count;
+        }
+      } catch (e) {}
+    }
+
     function populateFarmerDropdown() {
       const dropdown = document.getElementById('farmer-dropdown');
+      dropdown.innerHTML = '';
+      if (farmers.length === 0) {
+        dropdown.innerHTML = '<option value="">-- No farmers registered yet. Click \'+ Register New\' --</option>';
+        return;
+      }
       dropdown.innerHTML = '<option value="">-- Choose Farmer from Khata --</option>';
       farmers.forEach(f => {
         const opt = document.createElement('option');
@@ -771,12 +792,11 @@
         opt.dataset.phone = f.phone;
         opt.dataset.village = f.village;
         opt.dataset.due = f.outstanding;
-        opt.textContent = `${f.name} (${f.village}) — Due: ₹${parseFloat(f.outstanding).toLocaleString('en-IN')}`;
+        opt.textContent = `${f.name} (${f.village || 'Local'}) — Due: ₹${parseFloat(f.outstanding).toLocaleString('en-IN')}`;
         dropdown.appendChild(opt);
       });
     }
 
-    // --- TAB SWITCHER ---
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active-tab');
@@ -802,14 +822,25 @@
 
       if (tabId === 'stock') renderStockTable();
       if (tabId === 'khata') renderKhataTable();
+      if (tabId === 'reports') loadReports();
     }
 
-    // --- QUICK ITEMS RENDER ---
     function renderQuickItems(filterText = '') {
       const container = document.getElementById('quick-items-grid');
       container.innerHTML = '';
 
       const filtered = products.filter(p => p.name.toLowerCase().includes(filterText.toLowerCase()));
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+            <i data-lucide="package" class="w-6 h-6 mx-auto mb-1 opacity-50"></i>
+            No products found. Click <strong>+ Add</strong> above to add products.
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
 
       filtered.forEach(p => {
         const isLow = p.stock <= 10;
@@ -836,7 +867,6 @@
       renderQuickItems(document.getElementById('quick-item-search').value);
     }
 
-    // --- BILLING LOGIC ---
     function addItemToBill(productId) {
       const product = products.find(p => p.id === productId);
       if (!product) return;
@@ -984,7 +1014,6 @@
       document.getElementById('cust-phone-input').value = opt.dataset.phone || '';
     }
 
-    // --- SAVE TO POSTGRES & PRINT BILL ---
     async function triggerPrintBill() {
       const custType = document.querySelector('input[name="customer-type"]:checked').value;
       const custName = document.getElementById('cust-name-input').value || 'Walk-in Customer';
@@ -1061,12 +1090,24 @@
       clearCurrentBill();
     }
 
-    // --- STOCK TABLE RENDER ---
     function renderStockTable(filter = '') {
       const tbody = document.getElementById('stock-table-tbody');
       tbody.innerHTML = '';
 
       const filtered = products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i data-lucide="package-search" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+              No products in stock master yet. Click "Add New Product" to add your first product.
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+        return;
+      }
 
       filtered.forEach(p => {
         const isLow = p.stock <= 10;
@@ -1117,40 +1158,53 @@
       let bags = 0, bottles = 0, low = 0;
       products.forEach(p => {
         if (p.unit.toLowerCase().includes('bag')) bags += parseInt(p.stock);
-        if (p.unit.toLowerCase().includes('bottle') || p.category === 'Pesticide') bottles += parseInt(p.stock);
+        else bottles += parseInt(p.stock);
         if (p.stock <= 10) low++;
       });
       document.getElementById('stat-total-bags').innerHTML = `${bags} <span class="text-xs font-normal text-slate-500 dark:text-slate-400">Bags</span>`;
-      document.getElementById('stat-total-bottles').innerHTML = `${bottles} <span class="text-xs font-normal text-slate-500 dark:text-slate-400">Bottles</span>`;
+      document.getElementById('stat-total-bottles').innerHTML = `${bottles} <span class="text-xs font-normal text-slate-500 dark:text-slate-400">Units</span>`;
       document.getElementById('stat-low-stock').innerHTML = `${low} <span class="text-xs font-normal text-rose-500 dark:text-rose-400">items</span>`;
     }
 
-    // --- KHATA TABLE RENDER ---
     function renderKhataTable() {
       const tbody = document.getElementById('khata-table-tbody');
       tbody.innerHTML = '';
+
+      if (farmers.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i data-lucide="users" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+              No farmers registered in Khata yet. Click "Register Farmer" to create an account.
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+        return;
+      }
 
       farmers.forEach(f => {
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40";
         tr.innerHTML = `
           <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">${f.name}</td>
-          <td class="py-3 px-4 text-slate-500 dark:text-slate-400">${f.village}</td>
-          <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">${f.phone}</td>
-          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600 dark:text-rose-400">₹${parseFloat(f.outstanding).toLocaleString('en-IN')}</td>
-          <td class="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px]">${f.lastTx}</td>
+          <td class="py-3 px-4 text-slate-500 dark:text-slate-400">${f.village || '-'}</td>
+          <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">${f.phone || '-'}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600 dark:text-rose-400">₹${parseFloat(f.outstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+          <td class="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px]">${f.lastTx || 'None'}</td>
           <td class="py-3 px-4 text-center">
             <button onclick="recordKhataPaymentPrompt(${f.id})" class="px-2.5 py-1 text-xs bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 rounded-lg font-medium transition">Record Payment</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+      lucide.createIcons();
     }
 
     async function recordKhataPaymentPrompt(farmerId) {
       const farmer = farmers.find(f => f.id === farmerId);
       if (!farmer) return;
-      const amount = prompt(`Record Cash/UPI payment received from ${farmer.name} (Current Due: ₹${farmer.outstanding}):`, "5000");
+      const amount = prompt(`Record Cash/UPI payment received from ${farmer.name} (Current Due: ₹${farmer.outstanding}):`, "1000");
       if (amount && !isNaN(amount)) {
         await fetch(`/api/farmers/${farmerId}/payment`, {
           method: 'POST',
@@ -1164,11 +1218,10 @@
     function updateKhataMetrics() {
       let totalDue = 0;
       farmers.forEach(f => { totalDue += parseFloat(f.outstanding); });
-      document.getElementById('stat-total-udhar').textContent = `₹${totalDue.toLocaleString('en-IN')}`;
+      document.getElementById('stat-total-udhar').textContent = `₹${totalDue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
       document.getElementById('stat-total-farmers').textContent = farmers.length;
     }
 
-    // --- EXPORT REPORT TO CSV ---
     function exportReportToCSV() {
       let csv = "Product Name,Category,HSN,GST Rate,Stock,Selling Price\n";
       products.forEach(p => {
@@ -1183,7 +1236,6 @@
       a.click();
     }
 
-    // --- NEW PRODUCT MODAL ---
     function openNewProductModal() { document.getElementById('add-product-modal').classList.remove('hidden'); }
     function closeNewProductModal() { document.getElementById('add-product-modal').classList.add('hidden'); }
 
@@ -1208,13 +1260,36 @@
         });
         closeNewProductModal();
         loadProducts();
-        alert(`Product "${productData.name}" saved to Neon database!`);
       } catch (err) {
         alert('Error saving product: ' + err.message);
       }
     }
 
-    // --- KEYBOARD SHORTCUTS (TALLY STYLE) ---
+    function openNewFarmerModal() { document.getElementById('add-farmer-modal').classList.remove('hidden'); }
+    function closeNewFarmerModal() { document.getElementById('add-farmer-modal').classList.add('hidden'); }
+
+    async function handleAddNewFarmer(e) {
+      e.preventDefault();
+      const farmerData = {
+        name: document.getElementById('nf-name').value,
+        village: document.getElementById('nf-village').value,
+        phone: document.getElementById('nf-phone').value,
+        outstanding: parseFloat(document.getElementById('nf-due').value || 0)
+      };
+
+      try {
+        await fetch('/api/farmers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(farmerData)
+        });
+        closeNewFarmerModal();
+        loadFarmers();
+      } catch (err) {
+        alert('Error registering farmer: ' + err.message);
+      }
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'F2') { e.preventDefault(); switchTab('billing'); }
       if (e.key === 'F3') { e.preventDefault(); switchTab('stock'); }
@@ -1222,12 +1297,12 @@
       if (e.key === 'F5') { e.preventDefault(); switchTab('reports'); }
     });
 
-    // --- INITIALIZE ---
     window.onload = () => {
       lucide.createIcons();
       checkDatabaseHealth();
       loadProducts();
       loadFarmers();
+      loadReports();
     };
   </script>
 </body>
