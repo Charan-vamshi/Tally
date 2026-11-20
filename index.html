@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dattareya Enterprises — Billing & Inventory</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
+    /* Smooth tab transition */
+    .tab-content {
+      transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+    }
+    .tab-content.hidden-tab {
+      display: none;
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    .tab-content.active-tab {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Print styles for A4 Tally Bill */
+    @media print {
+      body * { visibility: hidden; }
+      #print-invoice-modal, #print-invoice-modal * { visibility: visible; }
+      #print-invoice-modal {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background: white;
+        padding: 0;
+        margin: 0;
+        z-index: 99999;
+      }
+      .no-print { display: none !important; }
+      .print-border { border: 1.5px solid #000 !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- TOP APP BAR -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo & Enterprise Brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-green-800 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+            <i data-lucide="sprout" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="font-bold text-lg leading-tight text-slate-900 tracking-tight">Dattareya Enterprises</h1>
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Fertilizers & Pesticides</span>
+            </div>
+            <p class="text-xs text-slate-500 font-mono">GSTIN: 29AAAAA0000A1Z5 | Counter POS</p>
+          </div>
+        </div>
+
+        <!-- Quick Desktop Shortcuts & Time -->
+        <div class="hidden md:flex items-center gap-4">
+          <div class="text-right">
+            <div id="live-clock" class="text-xs font-semibold text-slate-700 font-mono">11:24 AM</div>
+            <div id="live-date" class="text-[11px] text-slate-400">Friday, Nov 20, 2026</div>
+          </div>
+          <div class="h-6 w-px bg-slate-200"></div>
+          <button onclick="openNewProductModal()" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center gap-1.5 transition">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Product
+          </button>
+        </div>
+
+      </div>
+
+      <!-- NAVIGATION TABS -->
+      <nav class="flex space-x-1 border-t border-slate-100 -mb-px overflow-x-auto no-scrollbar py-1">
+        <button onclick="switchTab('billing')" id="tab-btn-billing" class="tab-btn flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-700 transition-all">
+          <i data-lucide="receipt-text" class="w-4 h-4"></i>
+          <span>1. Billing Counter</span>
+          <span class="text-[10px] hidden sm:inline px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono font-normal">F2</span>
+        </button>
+
+        <button onclick="switchTab('stock')" id="tab-btn-stock" class="tab-btn flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all">
+          <i data-lucide="boxes" class="w-4 h-4"></i>
+          <span>2. Stock & Inventory</span>
+          <span class="text-[10px] hidden sm:inline px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono font-normal">F3</span>
+        </button>
+
+        <button onclick="switchTab('khata')" id="tab-btn-khata" class="tab-btn flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all">
+          <i data-lucide="book-open" class="w-4 h-4"></i>
+          <span>3. Khata (Udhar)</span>
+          <span class="text-[10px] hidden sm:inline px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono font-normal">F4</span>
+        </button>
+
+        <button onclick="switchTab('reports')" id="tab-btn-reports" class="tab-btn flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+          <span>4. Reports & Tax</span>
+          <span class="text-[10px] hidden sm:inline px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono font-normal">F5</span>
+        </button>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: BILLING COUNTER -->
+    <!-- ========================================================================= -->
+    <div id="tab-billing" class="tab-content active-tab">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT: CUSTOMER & PRODUCT SELECTOR (7 Cols) -->
+        <div class="lg:col-span-7 space-y-4">
+          
+          <!-- Customer Selection Box -->
+          <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Customer Details</span>
+              <div class="flex items-center gap-2 text-xs">
+                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="customer-type" value="cash" checked onchange="toggleCustomerType()" class="text-emerald-600 focus:ring-emerald-500">
+                  <span class="font-medium text-slate-700">Cash Customer</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="customer-type" value="khata" onchange="toggleCustomerType()" class="text-emerald-600 focus:ring-emerald-500">
+                  <span class="font-medium text-slate-700">Farmer Khata</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div id="cust-name-wrapper">
+                <label class="block text-xs font-medium text-slate-600 mb-1">Customer / Farmer Name</label>
+                <input type="text" id="cust-name-input" value="Walk-in Cash Customer" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Mobile No. (Optional)</label>
+                <input type="tel" id="cust-phone-input" placeholder="9876543210" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition font-mono">
+              </div>
+            </div>
+
+            <!-- Khata Farmer Quick Picker (Hidden by default) -->
+            <div id="khata-picker-div" class="hidden mt-3 pt-3 border-t border-dashed border-slate-200">
+              <label class="block text-xs font-medium text-emerald-800 mb-1">Select Registered Farmer:</label>
+              <select id="farmer-dropdown" onchange="selectKhataFarmer(this.value)" class="w-full px-3 py-2 text-sm bg-emerald-50/50 border border-emerald-200 rounded-lg text-emerald-950 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="">-- Choose Farmer from Khata --</option>
+                <option value="Ramesh Gowda" data-phone="9448123456" data-due="24500" data-village="Hosur">Ramesh Gowda (Hosur) — Current Due: ₹24,500</option>
+                <option value="Suresh Patil" data-phone="9880987654" data-due="12800" data-village="Mallapur">Suresh Patil (Mallapur) — Current Due: ₹12,800</option>
+                <option value="Basavaraj K" data-phone="9741238910" data-due="48000" data-village="Bableshwar">Basavaraj K (Bableshwar) — Current Due: ₹48,000</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Quick Product Items Selector -->
+          <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Quick Items / Tap to Add</span>
+              <div class="relative w-48 sm:w-64">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5"></i>
+                <input type="text" id="quick-item-search" oninput="filterQuickItems()" placeholder="Search product..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              </div>
+            </div>
+
+            <!-- Fast Tap Items Grid -->
+            <div id="quick-items-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: LIVE BILL TABLE & TOTALS (5 Cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+            
+            <!-- Bill Card Header -->
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-xl">
+              <div>
+                <span class="text-xs font-bold font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">INV-DE-2026-0042</span>
+                <p class="text-xs text-slate-500 mt-0.5">Tax Invoice (Intra-state GST)</p>
+              </div>
+              <button onclick="clearCurrentBill()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center gap-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Clear
+              </button>
+            </div>
+
+            <!-- Items In Current Bill -->
+            <div class="p-3 flex-1 overflow-y-auto max-h-[340px]">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-400 border-b border-slate-100">
+                    <th class="pb-2 font-medium">Item</th>
+                    <th class="pb-2 font-medium text-center">Qty</th>
+                    <th class="pb-2 font-medium text-right">Rate</th>
+                    <th class="pb-2 font-medium text-right">Total</th>
+                    <th class="pb-2 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody id="bill-items-tbody" class="divide-y divide-slate-100">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+              <div id="empty-cart-msg" class="py-12 text-center text-slate-400">
+                <i data-lucide="shopping-cart" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                <p class="text-xs">No items in bill yet. Tap items on the left to add.</p>
+              </div>
+            </div>
+
+            <!-- Billing Totals & Checkout Panel -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 rounded-b-xl space-y-3">
+              <div class="space-y-1.5 text-xs text-slate-600">
+                <div class="flex justify-between">
+                  <span>Subtotal (Taxable Value):</span>
+                  <span id="bill-subtotal" class="font-mono">₹0.00</span>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                  <span>CGST (Intra-state):</span>
+                  <span id="bill-cgst" class="font-mono">₹0.00</span>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                  <span>SGST (Intra-state):</span>
+                  <span id="bill-sgst" class="font-mono">₹0.00</span>
+                </div>
+                <div class="flex justify-between font-bold text-slate-900 text-sm pt-2 border-t border-slate-200">
+                  <span>Grand Total:</span>
+                  <span id="bill-grand-total" class="font-mono text-emerald-700 text-base">₹0.00</span>
+                </div>
+              </div>
+
+              <!-- Payment Mode Selector -->
+              <div>
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Payment Mode</label>
+                <div class="grid grid-cols-4 gap-1.5 text-xs">
+                  <button type="button" onclick="setPaymentMode('Cash')" id="pay-mode-Cash" class="pay-btn py-1.5 rounded-lg border text-center font-medium bg-emerald-600 text-white border-emerald-600 shadow-sm transition">Cash</button>
+                  <button type="button" onclick="setPaymentMode('UPI')" id="pay-mode-UPI" class="pay-btn py-1.5 rounded-lg border text-center font-medium bg-white text-slate-700 border-slate-200 hover:bg-slate-100 transition">UPI</button>
+                  <button type="button" onclick="setPaymentMode('Card')" id="pay-mode-Card" class="pay-btn py-1.5 rounded-lg border text-center font-medium bg-white text-slate-700 border-slate-200 hover:bg-slate-100 transition">Card</button>
+                  <button type="button" onclick="setPaymentMode('Credit')" id="pay-mode-Credit" class="pay-btn py-1.5 rounded-lg border text-center font-medium bg-white text-slate-700 border-slate-200 hover:bg-slate-100 transition text-rose-600">Udhar</button>
+                </div>
+              </div>
+
+              <!-- Print & Save Action Button -->
+              <button onclick="triggerPrintBill()" id="btn-save-print" disabled class="w-full py-3 bg-emerald-600 disabled:bg-slate-300 hover:bg-emerald-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 transition-all text-sm">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Save & Print A4 Bill</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: STOCK & INVENTORY -->
+    <!-- ========================================================================= -->
+    <div id="tab-stock" class="tab-content hidden-tab space-y-6">
+      
+      <!-- Metrics Overview -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Total Products</p>
+          <p class="text-2xl font-bold text-slate-900 font-mono mt-1">24</p>
+          <span class="text-[11px] text-emerald-600 font-medium">Active in database</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Fertilizer Bags in Stock</p>
+          <p class="text-2xl font-bold text-emerald-700 font-mono mt-1">680 <span class="text-xs font-normal text-slate-500">Bags</span></p>
+          <span class="text-[11px] text-slate-500">Urea, DAP, Potash</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Pesticides (Liquid)</p>
+          <p class="text-2xl font-bold text-indigo-700 font-mono mt-1">340 <span class="text-xs font-normal text-slate-500">Liters</span></p>
+          <span class="text-[11px] text-slate-500">Bottles & Cans</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/30 shadow-sm">
+          <p class="text-xs font-medium text-rose-700">Low Stock Alert</p>
+          <p class="text-2xl font-bold text-rose-600 font-mono mt-1">2 <span class="text-xs font-normal text-rose-500">items</span></p>
+          <span class="text-[11px] text-rose-600 font-medium">Re-order required</span>
+        </div>
+      </div>
+
+      <!-- Inventory Table Card -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold text-slate-900">Current Stock Master</span>
+            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-mono">100% Real-time Linked</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5"></i>
+              <input type="text" id="stock-search" oninput="filterStockTable()" placeholder="Search stock..." class="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <button onclick="openNewProductModal()" class="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1 transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Stock
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4">Product Name</th>
+                <th class="py-3 px-4">Category</th>
+                <th class="py-3 px-4 font-mono">HSN Code</th>
+                <th class="py-3 px-4 text-center">GST Slab</th>
+                <th class="py-3 px-4 text-right">Purchase Price</th>
+                <th class="py-3 px-4 text-right">Selling Rate</th>
+                <th class="py-3 px-4 text-center">Stock Level</th>
+                <th class="py-3 px-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stock-table-tbody" class="divide-y divide-slate-100">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: KHATA (FARMER CREDIT / UDHAR) -->
+    <!-- ========================================================================= -->
+    <div id="tab-khata" class="tab-content hidden-tab space-y-6">
+      
+      <!-- Khata Metrics -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-rose-200 bg-rose-50/20 shadow-sm">
+          <p class="text-xs font-medium text-rose-700">Total Udhar / Receivables</p>
+          <p class="text-2xl font-bold text-rose-600 font-mono mt-1">₹3,42,800</p>
+          <span class="text-[11px] text-slate-500">From 28 local farmers</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 shadow-sm">
+          <p class="text-xs font-medium text-emerald-700">Today's Udhar Collection</p>
+          <p class="text-2xl font-bold text-emerald-600 font-mono mt-1">₹45,000</p>
+          <span class="text-[11px] text-emerald-600">3 farmers paid today</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Active Farmers Directory</p>
+          <p class="text-2xl font-bold text-slate-900 font-mono mt-1">28</p>
+          <span class="text-[11px] text-slate-500">Across 6 nearby villages</span>
+        </div>
+      </div>
+
+      <!-- Farmers Khata Table -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <span class="text-sm font-bold text-slate-900">Farmer Khata Ledger</span>
+            <p class="text-xs text-slate-500">Select any farmer to view ledger history or record cash repayment.</p>
+          </div>
+          <button onclick="alert('Quick farmer registration modal will open here.')" class="px-3 py-1.5 text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white rounded-lg flex items-center gap-1 transition">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Register New Farmer
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4">Farmer Name</th>
+                <th class="py-3 px-4">Village</th>
+                <th class="py-3 px-4 font-mono">Mobile</th>
+                <th class="py-3 px-4 text-right">Outstanding Udhar</th>
+                <th class="py-3 px-4">Last Transaction</th>
+                <th class="py-3 px-4 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="khata-table-tbody" class="divide-y divide-slate-100">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: REPORTS & TAX SUMMARY -->
+    <!-- ========================================================================= -->
+    <div id="tab-reports" class="tab-content hidden-tab space-y-6">
+      
+      <!-- Report Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900">Daily Sales & GST Tax Register</h2>
+          <p class="text-xs text-slate-500">Automated breakdown for filing GSTR-1 and internal accounts.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="exportReportToCSV()" class="px-3 py-2 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1.5 transition shadow-sm">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            <span>Export to Excel (CSV)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tax Slab Summary -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Fertilizers (5% GST Slab)</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full font-bold">5% GST</span>
+          </div>
+          <p class="text-xl font-bold text-slate-900 font-mono mt-2">₹1,14,500</p>
+          <p class="text-xs text-slate-500 mt-1">Tax collected: <span class="font-mono text-emerald-600">₹5,725</span> (CGST 2.5% + SGST 2.5%)</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Pesticides (18% GST Slab)</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full font-bold">18% GST</span>
+          </div>
+          <p class="text-xl font-bold text-slate-900 font-mono mt-2">₹48,200</p>
+          <p class="text-xs text-slate-500 mt-1">Tax collected: <span class="font-mono text-indigo-600">₹8,676</span> (CGST 9% + SGST 9%)</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Total Today's Billing</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full font-bold">24 Bills</span>
+          </div>
+          <p class="text-xl font-bold text-slate-900 font-mono mt-2">₹1,62,700</p>
+          <p class="text-xs text-slate-500 mt-1">Total GST: <span class="font-mono text-slate-900 font-semibold">₹14,401</span></p>
+        </div>
+      </div>
+
+      <!-- Payment Collection Modes Breakdown -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Today's Payment Modes</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div class="p-3 bg-slate-50 rounded-lg">
+            <span class="text-xs text-slate-500">Cash in Drawer</span>
+            <p class="text-lg font-bold text-slate-900 font-mono mt-1">₹82,400</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg">
+            <span class="text-xs text-slate-500">UPI / QR Code</span>
+            <p class="text-lg font-bold text-slate-900 font-mono mt-1">₹45,300</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg">
+            <span class="text-xs text-slate-500">Card POS</span>
+            <p class="text-lg font-bold text-slate-900 font-mono mt-1">₹10,000</p>
+          </div>
+          <div class="p-3 bg-rose-50 rounded-lg border border-rose-100">
+            <span class="text-xs text-rose-700 font-medium">Udhar / Credit Given</span>
+            <p class="text-lg font-bold text-rose-600 font-mono mt-1">₹25,000</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <!-- ========================================================================= -->
+  <!-- A4 PRINTABLE TALLY INVOICE MODAL -->
+  <!-- ========================================================================= -->
+  <div id="print-invoice-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-xl max-w-3xl w-full p-6 shadow-2xl relative my-8 print:m-0 print:p-0 print:shadow-none print:w-full">
+      
+      <!-- Close & Print Controls (Hidden when printing) -->
+      <div class="no-print flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-bold text-slate-900">A4 Tally-Style Bill Preview</span>
+          <span class="text-xs text-slate-500">(Direct to USB A4 Printer)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="printer" class="w-4 h-4"></i> Print Now
+          </button>
+          <button onclick="closePrintModal()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg">
+            Close
+          </button>
+        </div>
+      </div>
+
+      <!-- ACTUAL BILL TEMPLATE (A4 Standard) -->
+      <div class="border-2 border-slate-900 p-4 font-sans text-xs text-slate-900 leading-normal">
+        
+        <!-- Header -->
+        <div class="text-center pb-3 border-b-2 border-slate-900">
+          <h2 class="text-lg font-extrabold tracking-wide uppercase">Dattareya Enterprises</h2>
+          <p class="text-[11px] font-semibold">Wholesale & Retail Dealers in Fertilizers, Pesticides & Seeds</p>
+          <p class="text-[11px]">Main Road, Market Yard, Karnataka - 586101</p>
+          <p class="text-[11px] font-mono mt-0.5"><strong>GSTIN:</strong> 29AAAAA0000A1Z5 | <strong>Phone:</strong> +91 94480 00000</p>
+        </div>
+
+        <div class="text-center font-bold uppercase py-1 border-b border-slate-900 tracking-wider bg-slate-100">
+          Tax Invoice
+        </div>
+
+        <!-- Meta Details (Two Columns) -->
+        <div class="grid grid-cols-2 border-b border-slate-900 text-[11px]">
+          <div class="p-2 border-r border-slate-900 space-y-0.5">
+            <p><strong>Invoice No:</strong> <span id="modal-bill-no" class="font-mono">INV-DE-2026-0042</span></p>
+            <p><strong>Date:</strong> <span id="modal-bill-date">20-Nov-2026</span></p>
+            <p><strong>Payment Mode:</strong> <span id="modal-bill-mode" class="font-semibold uppercase">Cash</span></p>
+          </div>
+          <div class="p-2 space-y-0.5">
+            <p><strong>Buyer / Farmer Name:</strong> <span id="modal-bill-cust">Ramesh Gowda</span></p>
+            <p><strong>Village / Address:</strong> <span id="modal-bill-village">Hosur</span></p>
+            <p><strong>Mobile:</strong> <span id="modal-bill-phone" class="font-mono">9448123456</span></p>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <table class="w-full text-left border-collapse border-b border-slate-900 text-[11px]">
+          <thead>
+            <tr class="border-b border-slate-900 bg-slate-50 font-bold">
+              <th class="p-1.5 border-r border-slate-900 w-8 text-center">#</th>
+              <th class="p-1.5 border-r border-slate-900">Description of Goods</th>
+              <th class="p-1.5 border-r border-slate-900 font-mono text-center">HSN</th>
+              <th class="p-1.5 border-r border-slate-900 text-center">Qty</th>
+              <th class="p-1.5 border-r border-slate-900 text-right">Rate (₹)</th>
+              <th class="p-1.5 border-r border-slate-900 text-center">GST%</th>
+              <th class="p-1.5 text-right">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="modal-items-tbody" class="divide-y divide-slate-300">
+            <!-- Injected by JS -->
+          </tbody>
+        </table>
+
+        <!-- Tax Breakdown & Grand Total -->
+        <div class="grid grid-cols-12 border-b border-slate-900 text-[11px]">
+          <div class="col-span-7 p-2 border-r border-slate-900">
+            <p class="font-bold mb-1">Terms & Conditions:</p>
+            <ol class="list-decimal list-inside text-[10px] space-y-0.5 text-slate-700">
+              <li>Goods once sold will not be taken back without receipt.</li>
+              <li>Subject to local jurisdiction.</li>
+              <li>Certified that particulars given above are true and correct.</li>
+            </ol>
+          </div>
+          <div class="col-span-5 p-2 space-y-1 font-mono">
+            <div class="flex justify-between">
+              <span>Taxable Value:</span>
+              <span id="modal-subtotal">₹0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span>CGST:</span>
+              <span id="modal-cgst">₹0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span>SGST:</span>
+              <span id="modal-sgst">₹0.00</span>
+            </div>
+            <div class="flex justify-between font-bold text-xs pt-1 border-t border-slate-900 text-slate-900">
+              <span>Invoice Total:</span>
+              <span id="modal-grand-total">₹0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Signatures -->
+        <div class="grid grid-cols-2 pt-6 text-[10px]">
+          <div>
+            <p>Customer Signature</p>
+          </div>
+          <div class="text-right">
+            <p class="font-bold">For DATTAREYA ENTERPRISES</p>
+            <div class="h-10"></div>
+            <p>Authorised Signatory</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- ADD PRODUCT MODAL -->
+  <!-- ========================================================================= -->
+  <div id="add-product-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900">Add New Product Master</h3>
+        <button onclick="closeNewProductModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <form onsubmit="handleAddNewProduct(event)" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Product Name</label>
+          <input type="text" id="np-name" required placeholder="e.g., Urea 45kg Bag" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Category</label>
+            <select id="np-cat" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="Fertilizer">Fertilizer</option>
+              <option value="Pesticide">Pesticide</option>
+              <option value="Seeds">Seeds</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Unit</label>
+            <input type="text" id="np-unit" required value="Bag" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">HSN Code</label>
+            <input type="text" id="np-hsn" required value="3102" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">GST Rate</label>
+            <select id="np-gst" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+              <option value="5">5% (Fertilizers)</option>
+              <option value="18">18% (Pesticides)</option>
+              <option value="12">12%</option>
+              <option value="0">0% (Exempt)</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Purchase Price (₹)</label>
+            <input type="number" id="np-cost" required value="240" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Selling Price (₹)</label>
+            <input type="number" id="np-price" required value="266" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Initial Stock Quantity</label>
+          <input type="number" id="np-stock" required value="50" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition mt-2">
+          Save Product to Database
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // --- 1. PRODUCT DATABASE ---
+    let products = [
+      { id: 1, name: "Urea 45kg (Neem Coated)", category: "Fertilizer", unit: "Bag", hsn: "3102", gst: 5, purchasePrice: 242, price: 266, stock: 450 },
+      { id: 2, name: "DAP 50kg (Di-Ammonium)", category: "Fertilizer", unit: "Bag", hsn: "3105", gst: 5, purchasePrice: 1250, price: 1350, stock: 180 },
+      { id: 3, name: "MOP 50kg (Potash)", category: "Fertilizer", unit: "Bag", hsn: "3104", gst: 5, purchasePrice: 1600, price: 1700, stock: 85 },
+      { id: 4, name: "Coragen 60ml (FMC)", category: "Pesticide", unit: "Bottle", hsn: "3808", gst: 18, purchasePrice: 820, price: 920, stock: 42 },
+      { id: 5, name: "Confidor 100ml (Bayer)", category: "Pesticide", unit: "Bottle", hsn: "3808", gst: 18, purchasePrice: 410, price: 470, stock: 6 }, // low stock
+      { id: 6, name: "Roundup 1L (Herbicide)", category: "Pesticide", unit: "Bottle", hsn: "3808", gst: 18, purchasePrice: 480, price: 540, stock: 55 },
+      { id: 7, name: "Zinc Sulphate 21% 10kg", category: "Fertilizer", unit: "Bag", hsn: "2833", gst: 12, purchasePrice: 380, price: 440, stock: 4 } // low stock
+    ];
+
+    // --- 2. FARMERS KHATA DATABASE ---
+    let farmers = [
+      { id: 1, name: "Ramesh Gowda", village: "Hosur", phone: "9448123456", outstanding: 24500, lastTx: "18-Nov-2026 (Udhar +₹4,800)" },
+      { id: 2, name: "Suresh Patil", village: "Mallapur", phone: "9880987654", outstanding: 12800, lastTx: "15-Nov-2026 (Paid -₹10,000)" },
+      { id: 3, name: "Basavaraj K", village: "Bableshwar", phone: "9741238910", outstanding: 48000, lastTx: "12-Nov-2026 (Udhar +₹18,500)" },
+      { id: 4, name: "Mallikarjun Hiremath", village: "Teggi", phone: "9448554433", outstanding: 6400, lastTx: "20-Nov-2026 (Paid -₹5,000)" },
+      { id: 5, name: "Ningappa Doddamani", village: "Kukanur", phone: "9845112233", outstanding: 31200, lastTx: "04-Nov-2026 (Udhar +₹8,200)" }
+    ];
+
+    // --- 3. CURRENT ACTIVE BILL STATE ---
+    let billItems = [];
+    let selectedPaymentMode = 'Cash';
+
+    // --- TAB SWITCHER WITH SMOOTH TRANSITION ---
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active-tab');
+        tab.classList.add('hidden-tab');
+      });
+
+      const targetTab = document.getElementById(`tab-${tabId}`);
+      if (targetTab) {
+        targetTab.classList.remove('hidden-tab');
+        setTimeout(() => targetTab.classList.add('active-tab'), 10);
+      }
+
+      // Update Nav Buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-emerald-600', 'text-emerald-700');
+        btn.classList.add('border-transparent', 'text-slate-500');
+      });
+
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('border-emerald-600', 'text-emerald-700');
+        activeBtn.classList.remove('border-transparent', 'text-slate-500');
+      }
+
+      // Render tab-specific components
+      if (tabId === 'stock') renderStockTable();
+      if (tabId === 'khata') renderKhataTable();
+    }
+
+    // --- QUICK ITEMS RENDER ---
+    function renderQuickItems(filterText = '') {
+      const container = document.getElementById('quick-items-grid');
+      container.innerHTML = '';
+
+      const filtered = products.filter(p => p.name.toLowerCase().includes(filterText.toLowerCase()));
+
+      filtered.forEach(p => {
+        const isLow = p.stock <= 10;
+        const card = document.createElement('div');
+        card.className = "p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-emerald-50/60 hover:border-emerald-300 cursor-pointer transition text-left relative group select-none";
+        card.onclick = () => addItemToBill(p.id);
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <span class="text-[10px] font-bold px-1.5 py-0.2 rounded ${p.category === 'Fertilizer' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'}">${p.category}</span>
+            <span class="text-[10px] font-mono ${isLow ? 'text-rose-600 font-bold' : 'text-slate-400'}">${p.stock} ${p.unit}s</span>
+          </div>
+          <h4 class="font-semibold text-xs text-slate-800 mt-1 line-clamp-1 group-hover:text-emerald-800">${p.name}</h4>
+          <div class="flex items-baseline justify-between mt-1">
+            <span class="text-xs font-bold text-slate-900 font-mono">₹${p.price}</span>
+            <span class="text-[10px] text-slate-400 font-mono">GST ${p.gst}%</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterQuickItems() {
+      const query = document.getElementById('quick-item-search').value;
+      renderQuickItems(query);
+    }
+
+    // --- BILLING LOGIC ---
+    function addItemToBill(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      const existing = billItems.find(item => item.id === productId);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        billItems.push({
+          id: product.id,
+          name: product.name,
+          hsn: product.hsn,
+          gst: product.gst,
+          rate: product.price,
+          unit: product.unit,
+          qty: 1
+        });
+      }
+      renderBillTable();
+    }
+
+    function updateItemQty(productId, newQty) {
+      const item = billItems.find(i => i.id === productId);
+      if (!item) return;
+
+      const qty = parseInt(newQty);
+      if (qty <= 0) {
+        billItems = billItems.filter(i => i.id !== productId);
+      } else {
+        item.qty = qty;
+      }
+      renderBillTable();
+    }
+
+    function removeItemFromBill(productId) {
+      billItems = billItems.filter(i => i.id !== productId);
+      renderBillTable();
+    }
+
+    function clearCurrentBill() {
+      billItems = [];
+      renderBillTable();
+    }
+
+    function renderBillTable() {
+      const tbody = document.getElementById('bill-items-tbody');
+      const emptyMsg = document.getElementById('empty-cart-msg');
+      const saveBtn = document.getElementById('btn-save-print');
+
+      tbody.innerHTML = '';
+
+      if (billItems.length === 0) {
+        emptyMsg.classList.remove('hidden');
+        saveBtn.disabled = true;
+        updateTotals(0, 0, 0);
+        return;
+      }
+
+      emptyMsg.classList.add('hidden');
+      saveBtn.disabled = false;
+
+      let subtotal = 0;
+      let totalTax = 0;
+
+      billItems.forEach(item => {
+        // GST is inclusive or added on rate. Standard tally approach: Rate is tax inclusive or taxable.
+        // For simplicity: Taxable Amount = Rate * Qty / (1 + GST/100) or Rate * Qty with tax added.
+        // Let's use standard retail: Rate * Qty, GST split into CGST/SGST.
+        const lineTotal = item.rate * item.qty;
+        const taxable = lineTotal / (1 + (item.gst / 100));
+        const tax = lineTotal - taxable;
+
+        subtotal += taxable;
+        totalTax += tax;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="py-2 font-medium text-slate-800">
+            <div>${item.name}</div>
+            <span class="text-[10px] text-slate-400 font-mono">HSN: ${item.hsn} (${item.gst}%)</span>
+          </td>
+          <td class="py-2 text-center">
+            <input type="number" min="1" value="${item.qty}" onchange="updateItemQty(${item.id}, this.value)" class="w-12 text-center py-0.5 border border-slate-200 rounded font-mono text-xs">
+          </td>
+          <td class="py-2 text-right font-mono">₹${item.rate}</td>
+          <td class="py-2 text-right font-bold font-mono">₹${lineTotal.toFixed(0)}</td>
+          <td class="py-2 text-right">
+            <button onclick="removeItemFromBill(${item.id})" class="text-slate-300 hover:text-rose-600 transition">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      updateTotals(subtotal, totalTax / 2, totalTax / 2);
+      lucide.createIcons();
+    }
+
+    function updateTotals(subtotal, cgst, sgst) {
+      const grandTotal = Math.round(subtotal + cgst + sgst);
+      document.getElementById('bill-subtotal').textContent = `₹${subtotal.toFixed(2)}`;
+      document.getElementById('bill-cgst').textContent = `₹${cgst.toFixed(2)}`;
+      document.getElementById('bill-sgst').textContent = `₹${sgst.toFixed(2)}`;
+      document.getElementById('bill-grand-total').textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
+    }
+
+    // --- PAYMENT MODE SELECTOR ---
+    function setPaymentMode(mode) {
+      selectedPaymentMode = mode;
+      document.querySelectorAll('.pay-btn').forEach(btn => {
+        btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600');
+        btn.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
+      });
+
+      const active = document.getElementById(`pay-mode-${mode}`);
+      if (active) {
+        active.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+        active.classList.remove('bg-white', 'text-slate-700', 'border-slate-200');
+      }
+    }
+
+    // --- CUSTOMER KHATA PICKER TOGGLE ---
+    function toggleCustomerType() {
+      const type = document.querySelector('input[name="customer-type"]:checked').value;
+      const khataDiv = document.getElementById('khata-picker-div');
+      const nameInput = document.getElementById('cust-name-input');
+      const phoneInput = document.getElementById('cust-phone-input');
+
+      if (type === 'khata') {
+        khataDiv.classList.remove('hidden');
+        nameInput.value = '';
+        nameInput.placeholder = 'Choose from list below...';
+        setPaymentMode('Credit');
+      } else {
+        khataDiv.classList.add('hidden');
+        nameInput.value = 'Walk-in Cash Customer';
+        phoneInput.value = '';
+        setPaymentMode('Cash');
+      }
+    }
+
+    function selectKhataFarmer(farmerName) {
+      const dropdown = document.getElementById('farmer-dropdown');
+      const selectedOption = dropdown.options[dropdown.selectedIndex];
+      if (!selectedOption || !selectedOption.value) return;
+
+      document.getElementById('cust-name-input').value = farmerName;
+      document.getElementById('cust-phone-input').value = selectedOption.dataset.phone || '';
+    }
+
+    // --- PRINT BILL TRIGGER & MODAL ---
+    function triggerPrintBill() {
+      const modal = document.getElementById('print-invoice-modal');
+      const custName = document.getElementById('cust-name-input').value || 'Walk-in Customer';
+      const custPhone = document.getElementById('cust-phone-input').value || '-';
+
+      document.getElementById('modal-bill-cust').textContent = custName;
+      document.getElementById('modal-bill-phone').textContent = custPhone;
+      document.getElementById('modal-bill-mode').textContent = selectedPaymentMode;
+
+      const tbody = document.getElementById('modal-items-tbody');
+      tbody.innerHTML = '';
+
+      let subtotal = 0;
+      let totalTax = 0;
+
+      billItems.forEach((item, index) => {
+        const lineTotal = item.rate * item.qty;
+        const taxable = lineTotal / (1 + (item.gst / 100));
+        const tax = lineTotal - taxable;
+        subtotal += taxable;
+        totalTax += tax;
+
+        const tr = document.createElement('tr');
+        tr.className = "text-[11px]";
+        tr.innerHTML = `
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${index + 1}</td>
+          <td class="p-1.5 border-r border-slate-900 font-semibold">${item.name}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.hsn}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.qty} ${item.unit}</td>
+          <td class="p-1.5 border-r border-slate-900 text-right font-mono">${item.rate.toFixed(2)}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.gst}%</td>
+          <td class="p-1.5 text-right font-mono font-bold">${lineTotal.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const grandTotal = Math.round(subtotal + totalTax);
+      document.getElementById('modal-subtotal').textContent = `₹${subtotal.toFixed(2)}`;
+      document.getElementById('modal-cgst').textContent = `₹${(totalTax / 2).toFixed(2)}`;
+      document.getElementById('modal-sgst').textContent = `₹${(totalTax / 2).toFixed(2)}`;
+      document.getElementById('modal-grand-total').textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
+
+      modal.classList.remove('hidden');
+    }
+
+    function closePrintModal() {
+      document.getElementById('print-invoice-modal').classList.add('hidden');
+    }
+
+    // --- STOCK TABLE RENDER ---
+    function renderStockTable(filter = '') {
+      const tbody = document.getElementById('stock-table-tbody');
+      tbody.innerHTML = '';
+
+      const filtered = products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
+
+      filtered.forEach(p => {
+        const isLow = p.stock <= 10;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-slate-800">${p.name}</td>
+          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${p.category === 'Fertilizer' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'}">${p.category}</span></td>
+          <td class="py-3 px-4 font-mono text-slate-500">${p.hsn}</td>
+          <td class="py-3 px-4 text-center font-mono">${p.gst}%</td>
+          <td class="py-3 px-4 text-right font-mono">₹${p.purchasePrice}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold">₹${p.price}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center gap-1 font-mono font-semibold px-2 py-0.5 rounded ${isLow ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-800'}">
+              ${isLow ? '<i data-lucide="alert-triangle" class="w-3 h-3 text-rose-500"></i>' : ''}
+              ${p.stock} ${p.unit}s
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="adjustStockPrompt(${p.id})" class="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Add/Adjust</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    function filterStockTable() {
+      const query = document.getElementById('stock-search').value;
+      renderStockTable(query);
+    }
+
+    function adjustStockPrompt(id) {
+      const product = products.find(p => p.id === id);
+      if (!product) return;
+      const add = prompt(`Add stock for ${product.name} (Current: ${product.stock} ${product.unit}s):`, "50");
+      if (add && !isNaN(add)) {
+        product.stock += parseInt(add);
+        renderStockTable();
+        renderQuickItems();
+      }
+    }
+
+    // --- KHATA TABLE RENDER ---
+    function renderKhataTable() {
+      const tbody = document.getElementById('khata-table-tbody');
+      tbody.innerHTML = '';
+
+      farmers.forEach(f => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-slate-800">${f.name}</td>
+          <td class="py-3 px-4 text-slate-500">${f.village}</td>
+          <td class="py-3 px-4 font-mono text-slate-500">${f.phone}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600">₹${f.outstanding.toLocaleString('en-IN')}</td>
+          <td class="py-3 px-4 text-slate-500 text-[11px]">${f.lastTx}</td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="recordKhataPaymentPrompt(${f.id})" class="px-2.5 py-1 text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg font-medium transition">Record Payment</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function recordKhataPaymentPrompt(farmerId) {
+      const farmer = farmers.find(f => f.id === farmerId);
+      if (!farmer) return;
+      const amount = prompt(`Record Cash/UPI payment received from ${farmer.name} (Current Due: ₹${farmer.outstanding}):`, "5000");
+      if (amount && !isNaN(amount)) {
+        farmer.outstanding = Math.max(0, farmer.outstanding - parseInt(amount));
+        farmer.lastTx = `Today (Paid -₹${parseInt(amount)})`;
+        renderKhataTable();
+      }
+    }
+
+    // --- EXPORT REPORT TO CSV ---
+    function exportReportToCSV() {
+      let csv = "Product Name,Category,HSN,GST Rate,Stock,Selling Price\n";
+      products.forEach(p => {
+        csv += `"${p.name}","${p.category}","${p.hsn}","${p.gst}%","${p.stock}","${p.price}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `Dattareya_Sales_Stock_${new Date().toISOString().slice(0,10)}.csv`);
+      a.click();
+    }
+
+    // --- NEW PRODUCT MODAL ---
+    function openNewProductModal() {
+      document.getElementById('add-product-modal').classList.remove('hidden');
+    }
+    function closeNewProductModal() {
+      document.getElementById('add-product-modal').classList.add('hidden');
+    }
+
+    function handleAddNewProduct(e) {
+      e.preventDefault();
+      const name = document.getElementById('np-name').value;
+      const category = document.getElementById('np-cat').value;
+      const unit = document.getElementById('np-unit').value;
+      const hsn = document.getElementById('np-hsn').value;
+      const gst = parseInt(document.getElementById('np-gst').value);
+      const purchasePrice = parseFloat(document.getElementById('np-cost').value);
+      const price = parseFloat(document.getElementById('np-price').value);
+      const stock = parseInt(document.getElementById('np-stock').value);
+
+      products.push({
+        id: products.length + 1,
+        name, category, unit, hsn, gst, purchasePrice, price, stock
+      });
+
+      closeNewProductModal();
+      renderQuickItems();
+      renderStockTable();
+      alert(`Product "${name}" added successfully!`);
+    }
+
+    // --- KEYBOARD SHORTCUTS (TALLY STYLE) ---
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'F2') { e.preventDefault(); switchTab('billing'); }
+      if (e.key === 'F3') { e.preventDefault(); switchTab('stock'); }
+      if (e.key === 'F4') { e.preventDefault(); switchTab('khata'); }
+      if (e.key === 'F5') { e.preventDefault(); switchTab('reports'); }
+    });
+
+    // --- INITIALIZE ---
+    window.onload = () => {
+      lucide.createIcons();
+      renderQuickItems();
+      renderStockTable();
+      renderKhataTable();
+
+      // Clock
+      setInterval(() => {
+        const now = new Date();
+        document.getElementById('live-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }, 1000);
+    };
+  </script>
+</body>
+</html>

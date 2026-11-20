@@ -1,0 +1,15 @@
+{
+  "name": "dattareya-billing",
+  "version": "1.0.0",
+  "description": "Dattareya Enterprises - Tally-like Billing, Inventory & Khata System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["tally", "billing", "gst", "fertilizers", "khata", "inventory"],
+  "author": "Dattareya Enterprises",
+  "license": "ISC"
+}
