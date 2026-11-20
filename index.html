@@ -309,7 +309,7 @@
         <!-- Brand Pill -->
         <span class="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-widest uppercase text-emerald-400 font-bold bg-emerald-950/80 border border-emerald-800/80 px-3.5 py-1 rounded-full">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-          Dattareya Enterprises
+          <span id="welcome-motion-shop">Dattareya Enterprises</span>
         </span>
 
         <!-- Dynamic Admin Hanging Welcome Title -->
@@ -624,14 +624,14 @@
           
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-green-800 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-              <i data-lucide="sprout" class="w-6 h-6"></i>
+              <i data-lucide="store" class="w-6 h-6"></i>
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h1 class="font-bold text-lg leading-tight text-slate-900 dark:text-white tracking-tight">Dattareya Enterprises</h1>
-                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Fertilizers & Pesticides</span>
+                <h1 id="vendor-shop-name" class="font-bold text-lg leading-tight text-slate-900 dark:text-white tracking-tight">Dattareya Enterprises</h1>
+                <span id="vendor-shop-tagline" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Fertilizers & Pesticides</span>
               </div>
-              <p class="text-xs text-slate-500 dark:text-slate-400 font-mono">GSTIN: 29AAAAA0000A1Z5 | Counter POS</p>
+              <p id="vendor-shop-sub" class="text-xs text-slate-500 dark:text-slate-400 font-mono">GSTIN: 29AAAAA0000A1Z5 | Counter POS</p>
             </div>
           </div>
 
@@ -681,6 +681,12 @@
             <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
             <span>4. Reports & Tax</span>
             <span class="text-[10px] hidden sm:inline px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono font-normal">F5</span>
+          </button>
+
+          <button onclick="switchTab('settings')" id="tab-btn-settings" class="tab-btn flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            <span>5. Shop Profile</span>
+            <span class="text-[10px] hidden sm:inline px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono font-normal">F6</span>
           </button>
         </nav>
 
@@ -1014,6 +1020,73 @@
         </div>
       </div>
 
+      <!-- TAB 5: SHOP PROFILE & SETTINGS -->
+      <div id="tab-settings" class="tab-content hidden-tab space-y-6">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 max-w-3xl mx-auto space-y-6">
+          
+          <div class="border-b border-slate-100 dark:border-slate-800 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                <i data-lucide="store" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-slate-900 dark:text-white">Shop Profile & Invoice Settings</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">These details appear on your shop counter and customer A4 printed tax invoices.</p>
+              </div>
+            </div>
+            <span class="text-[11px] font-mono px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 self-start sm:self-auto">
+              Live Sync
+            </span>
+          </div>
+
+          <form onsubmit="handleSaveShopProfile(event)" class="space-y-4 text-xs">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Shop / Trading Name</label>
+                <input type="text" id="setting-shop-name" required placeholder="e.g. Dattareya Enterprises" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition text-sm font-bold">
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">GSTIN Number</label>
+                <input type="text" id="setting-gstin" required placeholder="29AAAAA0000A1Z5" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition font-mono uppercase text-sm">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Business Tagline / Nature of Goods</label>
+              <input type="text" id="setting-tagline" placeholder="Wholesale & Retail Dealers in Fertilizers, Pesticides & Seeds" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Shop Contact Phone / Mobile</label>
+                <input type="tel" id="setting-phone" placeholder="+91 94480 00000" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition font-mono">
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Vendor / Admin Display Name</label>
+                <input type="text" id="setting-vendor-name" placeholder="e.g. Ramesh" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Complete Store Address</label>
+              <textarea id="setting-address" rows="2" placeholder="Main Road, Market Yard, Karnataka - 586101" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition"></textarea>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between">
+              <span id="setting-status-msg" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium hidden">✓ Shop settings saved successfully</span>
+              <button type="submit" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-md shadow-emerald-600/20 flex items-center gap-2 ml-auto cursor-pointer">
+                <i data-lucide="check" class="w-4 h-4"></i> Save Shop Profile
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+
     </main>
 
   </div>
@@ -1041,10 +1114,10 @@
 
       <div class="border-2 border-slate-900 p-4 font-sans text-xs text-slate-900 leading-normal bg-white">
         <div class="text-center pb-3 border-b-2 border-slate-900">
-          <h2 class="text-lg font-extrabold tracking-wide uppercase">Dattareya Enterprises</h2>
-          <p class="text-[11px] font-semibold">Wholesale & Retail Dealers in Fertilizers, Pesticides & Seeds</p>
-          <p class="text-[11px]">Main Road, Market Yard, Karnataka - 586101</p>
-          <p class="text-[11px] font-mono mt-0.5"><strong>GSTIN:</strong> 29AAAAA0000A1Z5 | <strong>Phone:</strong> +91 94480 00000</p>
+          <h2 id="modal-shop-name" class="text-lg font-extrabold tracking-wide uppercase">Dattareya Enterprises</h2>
+          <p id="modal-shop-tagline" class="text-[11px] font-semibold">Wholesale & Retail Dealers in Fertilizers, Pesticides & Seeds</p>
+          <p id="modal-shop-addr" class="text-[11px]">Main Road, Market Yard, Karnataka - 586101</p>
+          <p class="text-[11px] font-mono mt-0.5"><strong>GSTIN:</strong> <span id="modal-shop-gstin">29AAAAA0000A1Z5</span> | <strong>Phone:</strong> <span id="modal-shop-phone">+91 94480 00000</span></p>
         </div>
 
         <div class="text-center font-bold uppercase py-1 border-b border-slate-900 tracking-wider bg-slate-100">
@@ -1114,7 +1187,7 @@
             <p>Customer Signature</p>
           </div>
           <div class="text-right">
-            <p class="font-bold">For DATTAREYA ENTERPRISES</p>
+            <p id="modal-shop-signatory" class="font-bold">For DATTAREYA ENTERPRISES</p>
             <div class="h-10"></div>
             <p>Authorised Signatory</p>
           </div>
@@ -1290,9 +1363,15 @@
         if (authData.authorized) {
           currentUser = {
             email: authData.email || email,
+            vendorId: authData.vendorId || 0,
             name: authData.role === 'OWNER' ? 'Cherry' : (authData.name || name),
             role: authData.role, // 'OWNER' or 'MANAGER'
-            picture: authData.picture || picture
+            picture: authData.picture || picture,
+            shopName: authData.shopName || 'Dattareya Enterprises',
+            tagline: authData.tagline || 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
+            gstin: authData.gstin || '29AAAAA0000A1Z5',
+            address: authData.address || 'Main Road, Market Yard, Karnataka - 586101',
+            phone: authData.phone || '+91 94480 00000'
           };
           sessionStorage.setItem('tally_user', JSON.stringify(currentUser));
 
@@ -1314,10 +1393,69 @@
       document.getElementById('auth-error-msg').textContent = msg;
     }
 
+    function getAuthHeaders() {
+      const headers = { 'Content-Type': 'application/json' };
+      if (currentUser && currentUser.vendorId) {
+        headers['x-vendor-id'] = currentUser.vendorId;
+      }
+      return headers;
+    }
+
+    function applyShopBranding() {
+      if (!currentUser) return;
+      const sName = currentUser.shopName || 'Dattareya Enterprises';
+      const sTag = currentUser.tagline || 'Wholesale & Retail Dealers in Fertilizers & Pesticides';
+      const sGstin = currentUser.gstin || '29AAAAA0000A1Z5';
+      const sPhone = currentUser.phone || '+91 94480 00000';
+      const sAddr = currentUser.address || 'Main Road, Market Yard, Karnataka - 586101';
+
+      // Top Header
+      const nameEl = document.getElementById('vendor-shop-name');
+      const tagEl = document.getElementById('vendor-shop-tagline');
+      const subEl = document.getElementById('vendor-shop-sub');
+      const welcomeShopEl = document.getElementById('welcome-motion-shop');
+
+      if (nameEl) nameEl.textContent = sName;
+      if (tagEl) tagEl.textContent = sTag;
+      if (subEl) subEl.textContent = `GSTIN: ${sGstin} | Counter POS`;
+      if (welcomeShopEl) welcomeShopEl.textContent = sName;
+
+      // Settings Tab Form
+      const setShop = document.getElementById('setting-shop-name');
+      const setGstin = document.getElementById('setting-gstin');
+      const setTag = document.getElementById('setting-tagline');
+      const setPhone = document.getElementById('setting-phone');
+      const setName = document.getElementById('setting-vendor-name');
+      const setAddr = document.getElementById('setting-address');
+
+      if (setShop) setShop.value = sName;
+      if (setGstin) setGstin.value = sGstin;
+      if (setTag) setTag.value = sTag;
+      if (setPhone) setPhone.value = sPhone;
+      if (setName) setName.value = currentUser.name || '';
+      if (setAddr) setAddr.value = sAddr;
+
+      // Invoice Print Modal
+      const modalShop = document.getElementById('modal-shop-name');
+      const modalTag = document.getElementById('modal-shop-tagline');
+      const modalAddr = document.getElementById('modal-shop-addr');
+      const modalGstin = document.getElementById('modal-shop-gstin');
+      const modalPhone = document.getElementById('modal-shop-phone');
+      const modalSign = document.getElementById('modal-shop-signatory');
+
+      if (modalShop) modalShop.textContent = sName;
+      if (modalTag) modalTag.textContent = sTag;
+      if (modalAddr) modalAddr.textContent = sAddr;
+      if (modalGstin) modalGstin.textContent = sGstin;
+      if (modalPhone) modalPhone.textContent = sPhone;
+      if (modalSign) modalSign.textContent = `For ${sName.toUpperCase()}`;
+    }
+
     // --- HANGING SIGNBOARD MOTION WELCOME ANIMATION ---
     function playAdminWelcomeAnimation(name, callback) {
       const overlay = document.getElementById('welcome-motion-overlay');
       const nameEl = document.getElementById('welcome-motion-name');
+      const welcomeShopEl = document.getElementById('welcome-motion-shop');
       const progressEl = document.getElementById('welcome-progress-bar');
       const authOverlay = document.getElementById('auth-overlay');
 
@@ -1328,6 +1466,9 @@
 
       if (authOverlay) authOverlay.classList.add('hidden');
       if (nameEl) nameEl.textContent = name || 'Admin';
+      if (welcomeShopEl && currentUser && currentUser.shopName) {
+        welcomeShopEl.textContent = currentUser.shopName;
+      }
       
       // Reset animation
       const container = overlay.querySelector('.hanging-sign-container');
@@ -1383,6 +1524,7 @@
         document.getElementById('owner-app').classList.add('hidden');
         document.getElementById('vendor-greeting').textContent = `Hi, ${currentUser.name}`;
         document.getElementById('vendor-avatar').src = currentUser.picture || 'https://www.gravatar.com/avatar?d=mp';
+        applyShopBranding();
         loadProducts();
         loadFarmers();
         loadReports();
@@ -1750,7 +1892,22 @@
     }
 
     // --- CRAZY COMPONENT: INSTANT SHOP COUNTER SIMULATOR ---
+    let prevUser = null;
     function openShopSimulator() {
+      prevUser = currentUser;
+      currentUser = {
+        email: 'preview.counter@gmail.com',
+        vendorId: 0,
+        name: 'Father (Counter 1)',
+        role: 'MANAGER',
+        picture: 'https://www.gravatar.com/avatar?d=mp',
+        shopName: 'Dattareya Enterprises',
+        tagline: 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
+        gstin: '29AAAAA0000A1Z5',
+        address: 'Main Road, Market Yard, Karnataka - 586101',
+        phone: '+91 94480 00000'
+      };
+      applyShopBranding();
       playAdminWelcomeAnimation("Father", () => {
         const modal = document.getElementById('shop-simulator-modal');
         const frame = document.getElementById('simulator-frame');
@@ -1781,6 +1938,9 @@
       document.body.appendChild(vendorApp);
       vendorApp.classList.add('hidden');
       modal.classList.add('hidden');
+      if (prevUser) {
+        currentUser = prevUser;
+      }
       pushTerminalLog("SIMULATOR: Exited Store Vendor POS Preview");
     }
 
@@ -1885,7 +2045,7 @@
 
     async function loadProducts() {
       try {
-        const res = await fetch('/api/products');
+        const res = await fetch('/api/products', { headers: getAuthHeaders() });
         if (res.ok) products = await res.json();
       } catch (err) { products = []; }
       renderQuickItems();
@@ -1895,7 +2055,7 @@
 
     async function loadFarmers() {
       try {
-        const res = await fetch('/api/farmers');
+        const res = await fetch('/api/farmers', { headers: getAuthHeaders() });
         if (res.ok) farmers = await res.json();
       } catch (err) { farmers = []; }
       renderKhataTable();
@@ -1905,7 +2065,7 @@
 
     async function loadReports() {
       try {
-        const res = await fetch('/api/reports');
+        const res = await fetch('/api/reports', { headers: getAuthHeaders() });
         if (res.ok) {
           const rep = await res.json();
           document.getElementById('report-total-sales').textContent = `₹${rep.totalSales.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
@@ -1922,7 +2082,7 @@
 
     async function loadInvoices() {
       try {
-        const res = await fetch('/api/invoices');
+        const res = await fetch('/api/invoices', { headers: getAuthHeaders() });
         if (res.ok) {
           invoices = await res.json();
           renderInvoices();
@@ -2041,7 +2201,10 @@
       }
 
       try {
-        const res = await fetch(`/api/invoices/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/invoices/${id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders()
+        });
         const data = await res.json();
         if (res.ok) {
           alert(data.message || `Invoice ${invNo} cancelled successfully.`);
@@ -2061,6 +2224,7 @@
       const inv = invoices.find(i => i.id === id);
       if (!inv) return;
 
+      applyShopBranding();
       document.getElementById('modal-bill-no').textContent = inv.invoice_no;
       document.getElementById('modal-bill-date').textContent = new Date(inv.created_at).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
       document.getElementById('modal-bill-mode').textContent = inv.payment_mode;
@@ -2140,6 +2304,7 @@
       if (tabId === 'stock') renderStockTable();
       if (tabId === 'khata') renderKhataTable();
       if (tabId === 'reports') loadReports();
+      if (tabId === 'settings') applyShopBranding();
     }
 
     function renderQuickItems(filterText = '') {
@@ -2389,7 +2554,7 @@
       try {
         await fetch('/api/invoices', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             invoiceNo: invNo,
             customerType: custType,
@@ -2407,6 +2572,7 @@
         console.error('Invoice save error:', err);
       }
 
+      applyShopBranding();
       document.getElementById('modal-bill-no').textContent = invNo;
       document.getElementById('modal-bill-cust').textContent = custName;
       document.getElementById('modal-bill-phone').textContent = custPhone;
@@ -2504,7 +2670,7 @@
       if (add && !isNaN(add)) {
         await fetch(`/api/products/${id}/adjust-stock`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ amount: parseInt(add) })
         });
         loadProducts();
@@ -2566,7 +2732,7 @@
       if (amount && !isNaN(amount)) {
         await fetch(`/api/farmers/${farmerId}/payment`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ amount: parseFloat(amount) })
         });
         loadFarmers();
@@ -2613,7 +2779,7 @@
       try {
         await fetch('/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify(productData)
         });
         closeNewProductModal();
@@ -2638,7 +2804,7 @@
       try {
         await fetch('/api/farmers', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify(farmerData)
         });
         closeNewFarmerModal();
@@ -2648,11 +2814,52 @@
       }
     }
 
+    async function handleSaveShopProfile(e) {
+      e.preventDefault();
+      const shopName = document.getElementById('setting-shop-name').value.trim();
+      const gstin = document.getElementById('setting-gstin').value.trim();
+      const tagline = document.getElementById('setting-tagline').value.trim();
+      const phone = document.getElementById('setting-phone').value.trim();
+      const name = document.getElementById('setting-vendor-name').value.trim();
+      const address = document.getElementById('setting-address').value.trim();
+
+      try {
+        const res = await fetch('/api/vendor/profile', {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ shopName, gstin, tagline, phone, name, address })
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          currentUser.shopName = updated.shop_name || shopName;
+          currentUser.gstin = updated.gstin || gstin;
+          currentUser.tagline = updated.tagline || tagline;
+          currentUser.phone = updated.phone || phone;
+          currentUser.name = updated.name || name;
+          currentUser.address = updated.address || address;
+          sessionStorage.setItem('tally_user', JSON.stringify(currentUser));
+          applyShopBranding();
+          document.getElementById('vendor-greeting').textContent = `Hi, ${currentUser.name}`;
+
+          const msg = document.getElementById('setting-status-msg');
+          if (msg) {
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 3500);
+          }
+        } else {
+          alert('Failed to update shop profile.');
+        }
+      } catch (err) {
+        alert('Error saving shop profile: ' + err.message);
+      }
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'F2') { e.preventDefault(); switchTab('billing'); }
       if (e.key === 'F3') { e.preventDefault(); switchTab('stock'); }
       if (e.key === 'F4') { e.preventDefault(); switchTab('khata'); }
       if (e.key === 'F5') { e.preventDefault(); switchTab('reports'); }
+      if (e.key === 'F6') { e.preventDefault(); switchTab('settings'); }
     });
 
     window.onload = () => {

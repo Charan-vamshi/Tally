@@ -35,6 +35,7 @@ async function initDatabase() {
         purchase_price NUMERIC(10, 2) NOT NULL,
         price NUMERIC(10, 2) NOT NULL,
         stock INT NOT NULL DEFAULT 0,
+        vendor_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -45,6 +46,7 @@ async function initDatabase() {
         phone VARCHAR(50),
         outstanding NUMERIC(12, 2) DEFAULT 0,
         last_tx VARCHAR(255),
+        vendor_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -61,6 +63,7 @@ async function initDatabase() {
         grand_total NUMERIC(12, 2) NOT NULL,
         items JSONB NOT NULL,
         status VARCHAR(50) DEFAULT 'ACTIVE',
+        vendor_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -68,12 +71,27 @@ async function initDatabase() {
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) UNIQUE NOT NULL,
         name VARCHAR(255),
+        shop_name VARCHAR(255) DEFAULT 'Dattareya Enterprises',
+        tagline VARCHAR(255) DEFAULT 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
+        gstin VARCHAR(100) DEFAULT '29AAAAA0000A1Z5',
+        address TEXT DEFAULT 'Main Road, Market Yard, Karnataka - 586101',
+        phone VARCHAR(50) DEFAULT '+91 94480 00000',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS shop_name VARCHAR(255) DEFAULT 'Dattareya Enterprises';
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS tagline VARCHAR(255) DEFAULT 'Wholesale & Retail Dealers in Fertilizers & Pesticides';
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS gstin VARCHAR(100) DEFAULT '29AAAAA0000A1Z5';
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS address TEXT DEFAULT 'Main Road, Market Yard, Karnataka - 586101';
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT '+91 94480 00000';
+
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS vendor_id INT;
+      ALTER TABLE farmers ADD COLUMN IF NOT EXISTS vendor_id INT;
+      ALTER TABLE invoices ADD COLUMN IF NOT EXISTS vendor_id INT;
     `);
 
     client.release();
-    console.log('Database tables ready.');
+    console.log('Database tables & multi-tenant partitions ready.');
   } catch (err) {
     console.error('Database initialization error:', err.message);
   }
@@ -128,6 +146,11 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(data));
   };
 
+  // Extract Vendor ID from header or query for multi-tenant data isolation
+  const getVendorId = () => {
+    return parseInt(req.headers['x-vendor-id'] || parsedUrl.searchParams.get('vendor_id') || 0);
+  };
+
   // --- CRYPTOGRAPHIC AUTH & RBAC CHECK ---
   if (pathname === '/api/auth/check' && req.method === 'POST') {
     const b = await getBody(req);
@@ -145,7 +168,6 @@ const server = http.createServer(async (req, res) => {
       name = verified.name || verified.given_name || 'User';
       picture = verified.picture || '';
     } else if (b.email) {
-      // Legacy fallback
       email = (b.email || '').trim().toLowerCase();
     }
 
@@ -153,14 +175,35 @@ const server = http.createServer(async (req, res) => {
 
     // 1. Is Super Owner?
     if (email === OWNER_EMAIL.toLowerCase()) {
-      return sendJson({ authorized: true, role: 'OWNER', email, name: 'Cherry', picture });
+      return sendJson({
+        authorized: true,
+        role: 'OWNER',
+        email,
+        vendorId: 0,
+        name: 'Cherry',
+        picture,
+        shopName: 'PaaS Platform Owner'
+      });
     }
 
-    // 2. Is Approved Manager?
+    // 2. Is Approved Manager / Vendor?
     if (pool) {
       const mgrRes = await pool.query('SELECT * FROM managers WHERE LOWER(email) = $1', [email]);
       if (mgrRes.rows.length > 0) {
-        return sendJson({ authorized: true, role: 'MANAGER', email, name: mgrRes.rows[0].name || name, picture });
+        const mgr = mgrRes.rows[0];
+        return sendJson({
+          authorized: true,
+          role: 'MANAGER',
+          email,
+          vendorId: mgr.id,
+          name: mgr.name || name,
+          picture,
+          shopName: mgr.shop_name || 'Dattareya Enterprises',
+          tagline: mgr.tagline || 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
+          gstin: mgr.gstin || '29AAAAA0000A1Z5',
+          address: mgr.address || 'Main Road, Market Yard, Karnataka - 586101',
+          phone: mgr.phone || '+91 94480 00000'
+        });
       }
     }
 
@@ -168,10 +211,50 @@ const server = http.createServer(async (req, res) => {
     return sendJson({ authorized: false, error: 'Unauthorized email account' }, 403);
   }
 
+  // --- VENDOR SHOP PROFILE & SETTINGS ---
+  if (pathname === '/api/vendor/profile' && req.method === 'GET') {
+    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
+    if (vId <= 0) {
+      return sendJson({
+        shop_name: 'Dattareya Enterprises',
+        tagline: 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
+        gstin: '29AAAAA0000A1Z5',
+        address: 'Main Road, Market Yard, Karnataka - 586101',
+        phone: '+91 94480 00000'
+      });
+    }
+    const r = await pool.query('SELECT id, email, name, shop_name, tagline, gstin, address, phone FROM managers WHERE id = $1', [vId]);
+    if (r.rows.length === 0) return sendJson({ error: 'Vendor not found' }, 404);
+    return sendJson(r.rows[0]);
+  }
+
+  if (pathname === '/api/vendor/profile' && (req.method === 'PUT' || req.method === 'POST')) {
+    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
+    if (vId <= 0) return sendJson({ error: 'Vendor ID required to update profile' }, 400);
+    const b = await getBody(req);
+    const r = await pool.query(`
+      UPDATE managers 
+      SET shop_name = $1, tagline = $2, gstin = $3, address = $4, phone = $5, name = COALESCE($6, name)
+      WHERE id = $7 
+      RETURNING id, email, name, shop_name, tagline, gstin, address, phone
+    `, [
+      b.shopName || 'Dattareya Enterprises',
+      b.tagline || '',
+      b.gstin || '',
+      b.address || '',
+      b.phone || '',
+      b.name || null,
+      vId
+    ]);
+    return sendJson(r.rows[0]);
+  }
+
   // --- MANAGER MANAGEMENT (OWNER ONLY) ---
   if (pathname === '/api/managers' && req.method === 'GET') {
     if (!pool) return sendJson([]);
-    const r = await pool.query('SELECT id, email, name, created_at FROM managers ORDER BY id DESC');
+    const r = await pool.query('SELECT id, email, name, shop_name, gstin, phone, created_at FROM managers ORDER BY id DESC');
     return sendJson(r.rows);
   }
 
@@ -182,8 +265,13 @@ const server = http.createServer(async (req, res) => {
     if (!email) return sendJson({ error: 'Email is required' }, 400);
 
     try {
-      const r = await pool.query('INSERT INTO managers (email, name) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING RETURNING *', [email, b.name || 'Store Manager']);
-      return sendJson(r.rows[0] || { message: 'Already exists' }, 201);
+      const r = await pool.query(`
+        INSERT INTO managers (email, name, shop_name) 
+        VALUES ($1, $2, $3) 
+        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+        RETURNING *
+      `, [email, b.name || 'Store Vendor', b.shopName || 'Dattareya Enterprises']);
+      return sendJson(r.rows[0], 201);
     } catch (err) {
       return sendJson({ error: err.message }, 500);
     }
@@ -212,19 +300,25 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // GET Products
+  // GET Products (Scoped to current vendor)
   if (pathname === '/api/products' && req.method === 'GET') {
     if (!pool) return sendJson([]);
-    const r = await pool.query('SELECT id, name, category, unit, hsn, gst, purchase_price as "purchasePrice", price, stock FROM products ORDER BY id DESC');
+    const vId = getVendorId();
+    const q = vId > 0
+      ? 'SELECT id, name, category, unit, hsn, gst, purchase_price as "purchasePrice", price, stock FROM products WHERE vendor_id = $1 OR vendor_id IS NULL ORDER BY name ASC'
+      : 'SELECT id, name, category, unit, hsn, gst, purchase_price as "purchasePrice", price, stock FROM products ORDER BY id DESC';
+    const params = vId > 0 ? [vId] : [];
+    const r = await pool.query(q, params);
     return sendJson(r.rows);
   }
 
-  // POST Create Product
+  // POST Create Product (Tagged with current vendor)
   if (pathname === '/api/products' && req.method === 'POST') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
     const b = await getBody(req);
-    const q = `INSERT INTO products (name, category, unit, hsn, gst, purchase_price, price, stock) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
-    const r = await pool.query(q, [b.name, b.category, b.unit, b.hsn, b.gst, b.purchasePrice, b.price, b.stock]);
+    const q = `INSERT INTO products (name, category, unit, hsn, gst, purchase_price, price, stock, vendor_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`;
+    const r = await pool.query(q, [b.name, b.category, b.unit, b.hsn, b.gst, b.purchasePrice, b.price, b.stock, vId > 0 ? vId : null]);
     return sendJson(r.rows[0], 201);
   }
 
@@ -237,19 +331,25 @@ const server = http.createServer(async (req, res) => {
     return sendJson(r.rows[0]);
   }
 
-  // GET Farmers
+  // GET Farmers (Scoped to current vendor)
   if (pathname === '/api/farmers' && req.method === 'GET') {
     if (!pool) return sendJson([]);
-    const r = await pool.query('SELECT id, name, village, phone, outstanding, last_tx as "lastTx" FROM farmers ORDER BY id DESC');
+    const vId = getVendorId();
+    const q = vId > 0
+      ? 'SELECT id, name, village, phone, outstanding, last_tx as "lastTx" FROM farmers WHERE vendor_id = $1 OR vendor_id IS NULL ORDER BY name ASC'
+      : 'SELECT id, name, village, phone, outstanding, last_tx as "lastTx" FROM farmers ORDER BY id DESC';
+    const params = vId > 0 ? [vId] : [];
+    const r = await pool.query(q, params);
     return sendJson(r.rows);
   }
 
   // POST Create Farmer
   if (pathname === '/api/farmers' && req.method === 'POST') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
     const b = await getBody(req);
-    const q = `INSERT INTO farmers (name, village, phone, outstanding, last_tx) VALUES ($1,$2,$3,$4,$5) RETURNING *`;
-    const r = await pool.query(q, [b.name, b.village || '', b.phone || '', parseFloat(b.outstanding || 0), 'Account Opened']);
+    const q = `INSERT INTO farmers (name, village, phone, outstanding, last_tx, vendor_id) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`;
+    const r = await pool.query(q, [b.name, b.village || '', b.phone || '', parseFloat(b.outstanding || 0), 'Account Opened', vId > 0 ? vId : null]);
     return sendJson(r.rows[0], 201);
   }
 
@@ -264,28 +364,35 @@ const server = http.createServer(async (req, res) => {
     return sendJson(r.rows[0]);
   }
 
-  // GET Invoices
+  // GET Invoices (Scoped to current vendor)
   if (pathname === '/api/invoices' && req.method === 'GET') {
     if (!pool) return sendJson([]);
-    const r = await pool.query('SELECT * FROM invoices ORDER BY id DESC LIMIT 50');
+    const vId = getVendorId();
+    const q = vId > 0
+      ? 'SELECT * FROM invoices WHERE vendor_id = $1 ORDER BY id DESC LIMIT 50'
+      : 'SELECT * FROM invoices ORDER BY id DESC LIMIT 50';
+    const params = vId > 0 ? [vId] : [];
+    const r = await pool.query(q, params);
     return sendJson(r.rows);
   }
 
-  // POST Save Invoice
+  // POST Save Invoice (Scoped to current vendor)
   if (pathname === '/api/invoices' && req.method === 'POST') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
     const b = await getBody(req);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
       
       const invQuery = `
-        INSERT INTO invoices (invoice_no, customer_type, customer_name, customer_phone, payment_mode, subtotal, cgst, sgst, grand_total, items)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *
+        INSERT INTO invoices (invoice_no, customer_type, customer_name, customer_phone, payment_mode, subtotal, cgst, sgst, grand_total, items, vendor_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *
       `;
       const invRes = await client.query(invQuery, [
         b.invoiceNo, b.customerType, b.customerName, b.customerPhone,
-        b.paymentMode, b.subtotal, b.cgst, b.sgst, b.grandTotal, JSON.stringify(b.items)
+        b.paymentMode, b.subtotal, b.cgst, b.sgst, b.grandTotal, JSON.stringify(b.items),
+        vId > 0 ? vId : null
       ]);
 
       for (const item of b.items) {
@@ -294,7 +401,11 @@ const server = http.createServer(async (req, res) => {
 
       if (b.paymentMode === 'Credit' && b.customerType === 'khata') {
         const lastTx = `Today (Udhar +₹${b.grandTotal})`;
-        await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3', [b.grandTotal, lastTx, b.customerName]);
+        if (vId > 0) {
+          await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3 AND (vendor_id = $4 OR vendor_id IS NULL)', [b.grandTotal, lastTx, b.customerName, vId]);
+        } else {
+          await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3', [b.grandTotal, lastTx, b.customerName]);
+        }
       }
 
       await client.query('COMMIT');
@@ -362,9 +473,14 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // GET Real Reports
+  // GET Real Reports (Scoped to current vendor)
   if (pathname === '/api/reports' && req.method === 'GET') {
     if (!pool) return sendJson({ totalSales: 0, totalGst: 0, cash: 0, upi: 0, card: 0, credit: 0, count: 0 });
+    const vId = getVendorId();
+    const whereClause = vId > 0
+      ? `WHERE (vendor_id = $1 OR vendor_id IS NULL) AND status = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`
+      : `WHERE status = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`;
+    const params = vId > 0 ? [vId] : [];
     const invRes = await pool.query(`
       SELECT 
         COALESCE(SUM(grand_total), 0) as total_sales,
@@ -374,8 +490,8 @@ const server = http.createServer(async (req, res) => {
         COALESCE(SUM(CASE WHEN payment_mode = 'Card' THEN grand_total ELSE 0 END), 0) as card,
         COALESCE(SUM(CASE WHEN payment_mode = 'Credit' THEN grand_total ELSE 0 END), 0) as credit,
         COUNT(*) as count
-      FROM invoices WHERE status = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE;
-    `);
+      FROM invoices ${whereClause};
+    `, params);
     const row = invRes.rows[0];
     return sendJson({
       totalSales: parseFloat(row.total_sales),
