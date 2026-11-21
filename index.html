@@ -80,6 +80,21 @@
 
   <script src="/public/js/shared.js"></script>
   <script>
+    function getUser() {
+      try {
+        const raw = sessionStorage.getItem('tally_user') || localStorage.getItem('tally_user');
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveUser(user) {
+      if (!user) return;
+      sessionStorage.setItem('tally_user', JSON.stringify(user));
+      localStorage.setItem('tally_user', JSON.stringify(user));
+    }
+
     // 1. Auto-redirect if already logged in
     const existingUser = getUser();
     if (existingUser) {
