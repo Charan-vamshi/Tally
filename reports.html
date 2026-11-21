@@ -24,29 +24,39 @@
   </script>
   <style>
     @page {
-      size: A5 portrait;
-      margin: 4mm 5mm;
+      size: A4 portrait;
+      margin: 0;
     }
     @media print {
       html, body {
-        width: 148mm;
+        width: 210mm !important;
+        height: 297mm !important;
         margin: 0 !important;
         padding: 0 !important;
         background: #fff !important;
+        overflow: hidden !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      body * { visibility: hidden; }
-      #print-invoice-modal, #print-invoice-modal * { visibility: visible; }
+      body * {
+        visibility: hidden !important;
+      }
+      #print-invoice-modal, #print-invoice-modal * {
+        visibility: visible !important;
+      }
       #print-invoice-modal { 
         position: absolute !important; 
         left: 0 !important; 
         top: 0 !important; 
-        width: 100% !important; 
-        max-width: 100% !important;
+        width: 210mm !important; 
+        height: 297mm !important; 
         margin: 0 !important; 
-        padding: 0 !important; 
-        background: white !important; 
+        padding: 8mm 10mm 0 10mm !important; 
+        background: #fff !important; 
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
       }
       #print-invoice-modal > div {
         max-width: 100% !important;
@@ -55,8 +65,19 @@
         padding: 0 !important;
         box-shadow: none !important;
         border: none !important;
+        background: transparent !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
-      .no-print { display: none !important; }
+      .print-bill-box {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .no-print {
+        display: none !important;
+      }
     }
   </style>
 </head>
@@ -143,7 +164,7 @@
         </div>
       </div>
 
-      <div class="border-2 border-slate-900 p-2.5 sm:p-3 font-sans text-xs text-slate-900 leading-tight bg-white">
+      <div class="print-bill-box border-2 border-slate-900 p-2.5 sm:p-3 font-sans text-xs text-slate-900 leading-tight bg-white">
         <!-- Top Mandatory Store Header: GSTIN & Mobile at top, Shop Name large & bold -->
         <div class="pb-2 border-b-2 border-slate-900">
           <div class="flex justify-between items-center text-[10px] font-mono border-b border-slate-200 pb-1 mb-1">
@@ -232,6 +253,12 @@
             <p>Authorised Signatory</p>
           </div>
         </div>
+      </div>
+
+      <!-- Cut Guide Line (Half of A4) -->
+      <div class="hidden print:flex items-center justify-between text-[8px] text-slate-400 pt-3 border-t border-dashed border-slate-300 mt-3 font-mono">
+        <span>✂ Cut along this line (Half of A4)</span>
+        <span>Original Bill</span>
       </div>
     </div>
   </div>
