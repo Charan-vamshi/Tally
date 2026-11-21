@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khata Ledger • Farmer Accounts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="h-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col font-sans transition-colors duration-200">
+
+  <!-- Shared Top Navigation Header -->
+  <header id="app-header" class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-sm"></header>
+
+  <!-- Main Viewport -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- Metrics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/20 shadow-sm">
+        <p class="text-xs font-medium text-rose-700 dark:text-rose-400">Total Udhar / Receivables</p>
+        <p id="stat-total-udhar" class="text-3xl font-bold text-rose-600 dark:text-rose-400 font-mono mt-1">₹0.00</p>
+        <span class="text-[11px] text-slate-500 dark:text-slate-400">Total outstanding balance from all farmers</span>
+      </div>
+      <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Active Farmers in Khata</p>
+        <p id="stat-total-farmers" class="text-3xl font-bold text-slate-900 dark:text-white font-mono mt-1">0</p>
+        <span class="text-[11px] text-slate-500 dark:text-slate-400">Registered store customers with credit line</span>
+      </div>
+    </div>
+
+    <!-- Farmer Khata Ledger Table Card -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <span class="text-sm font-bold text-slate-900 dark:text-white">Farmer Credit Ledger</span>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Record cash/UPI repayments and track pending balances.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5"></i>
+            <input type="text" id="khata-search" oninput="filterKhataTable()" placeholder="Search farmer or village..." class="pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <button onclick="openNewFarmerModal()" class="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1 transition cursor-pointer">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Register Farmer
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="py-3 px-4">Farmer Name</th>
+              <th class="py-3 px-4">Village</th>
+              <th class="py-3 px-4 font-mono">Mobile</th>
+              <th class="py-3 px-4 text-right">Outstanding Udhar</th>
+              <th class="py-3 px-4">Last Transaction</th>
+              <th class="py-3 px-4 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="khata-table-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- REGISTER NEW FARMER MODAL -->
+  <div id="add-farmer-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 dark:border-slate-800">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Register New Farmer for Khata</h3>
+        <button onclick="closeNewFarmerModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <form onsubmit="handleAddNewFarmer(event)" class="mt-4 space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Farmer Full Name</label>
+          <input type="text" id="nf-name" required placeholder="e.g., Ramesh Gowda" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Village / Address</label>
+          <input type="text" id="nf-village" placeholder="e.g., Hosur" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Mobile Number</label>
+          <input type="tel" id="nf-phone" placeholder="9876543210" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-700 dark:text-slate-300 mb-1">Opening Outstanding Due (₹)</label>
+          <input type="number" step="0.01" id="nf-due" value="0.00" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-mono">
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition mt-2 cursor-pointer">
+          Save Farmer Account
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/public/js/shared.js"></script>
+  <script>
+    const currentUser = requireAuth('MANAGER');
+    let farmers = [];
+
+    async function loadFarmers() {
+      try {
+        const res = await fetch('/api/farmers', { headers: getAuthHeaders() });
+        if (res.ok) farmers = await res.json();
+      } catch (err) { farmers = []; }
+      renderKhataTable();
+      updateKhataMetrics();
+    }
+
+    function renderKhataTable(filter = '') {
+      const tbody = document.getElementById('khata-table-tbody');
+      tbody.innerHTML = '';
+
+      const query = (filter || '').toLowerCase().trim();
+      const filtered = farmers.filter(f => (f.name || '').toLowerCase().includes(query) || (f.village || '').toLowerCase().includes(query));
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i data-lucide="users" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+              No farmers found in Khata ledger. Click "Register Farmer" to create an account.
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach(f => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">${f.name}</td>
+          <td class="py-3 px-4 text-slate-500 dark:text-slate-400">${f.village || '-'}</td>
+          <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">${f.phone || '-'}</td>
+          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600 dark:text-rose-400">₹${parseFloat(f.outstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+          <td class="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px]">${f.lastTx || 'None'}</td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="recordKhataPaymentPrompt(${f.id})" class="px-2.5 py-1 text-xs bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 rounded-lg font-medium transition cursor-pointer">Record Payment</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    function filterKhataTable() {
+      renderKhataTable(document.getElementById('khata-search').value);
+    }
+
+    async function recordKhataPaymentPrompt(farmerId) {
+      const farmer = farmers.find(f => f.id === farmerId);
+      if (!farmer) return;
+      const amount = prompt(`Record Cash/UPI payment received from ${farmer.name} (Current Due: ₹${farmer.outstanding}):`, "1000");
+      if (amount && !isNaN(amount)) {
+        await fetch(`/api/farmers/${farmerId}/payment`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ amount: parseFloat(amount) })
+        });
+        loadFarmers();
+      }
+    }
+
+    function updateKhataMetrics() {
+      let totalDue = 0;
+      farmers.forEach(f => { totalDue += parseFloat(f.outstanding || 0); });
+      document.getElementById('stat-total-udhar').textContent = `₹${totalDue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      document.getElementById('stat-total-farmers').textContent = farmers.length;
+    }
+
+    function openNewFarmerModal() { document.getElementById('add-farmer-modal').classList.remove('hidden'); }
+    function closeNewFarmerModal() { document.getElementById('add-farmer-modal').classList.add('hidden'); }
+
+    async function handleAddNewFarmer(e) {
+      e.preventDefault();
+      const farmerData = {
+        name: document.getElementById('nf-name').value,
+        village: document.getElementById('nf-village').value,
+        phone: document.getElementById('nf-phone').value,
+        outstanding: parseFloat(document.getElementById('nf-due').value || 0)
+      };
+
+      try {
+        await fetch('/api/farmers', {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(farmerData)
+        });
+        closeNewFarmerModal();
+        loadFarmers();
+      } catch (err) {
+        alert('Error saving farmer: ' + err.message);
+      }
+    }
+
+    window.onload = () => {
+      renderNavbar('khata');
+      loadFarmers();
+    };
+  </script>
+</body>
+</html>

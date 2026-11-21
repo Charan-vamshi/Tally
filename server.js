@@ -571,10 +571,28 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // --- STATIC FILE SERVING ---
-  let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
-  const ext = path.extname(filePath);
+  // --- STATIC FILE SERVING & CLEAN ROUTING ---
+  const cleanRoutes = {
+    '/': 'index.html',
+    '/admin': 'admin.html',
+    '/billing': 'billing.html',
+    '/stock': 'stock.html',
+    '/khata': 'khata.html',
+    '/reports': 'reports.html',
+    '/settings': 'settings.html'
+  };
 
+  let resolvedPath;
+  if (cleanRoutes[pathname]) {
+    resolvedPath = path.join(__dirname, cleanRoutes[pathname]);
+  } else {
+    resolvedPath = path.join(__dirname, pathname);
+    if (!path.extname(resolvedPath) && fs.existsSync(resolvedPath + '.html')) {
+      resolvedPath = resolvedPath + '.html';
+    }
+  }
+
+  const ext = path.extname(resolvedPath);
   const contentTypeMap = {
     '.html': 'text/html',
     '.css': 'text/css',
@@ -582,12 +600,13 @@ const server = http.createServer(async (req, res) => {
     '.json': 'application/json',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
-    '.svg': 'image/svg+xml'
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon'
   };
 
   const contentType = contentTypeMap[ext] || 'text/html';
 
-  fs.readFile(filePath, (err, content) => {
+  fs.readFile(resolvedPath, (err, content) => {
     if (err) {
       fs.readFile(path.join(__dirname, 'index.html'), (err404, defaultContent) => {
         res.writeHead(200, { 'Content-Type': 'text/html' });

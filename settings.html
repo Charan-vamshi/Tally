@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Store Profile & Settings • Store Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="h-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col font-sans transition-colors duration-200">
+
+  <!-- Shared Top Navigation Header -->
+  <header id="app-header" class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-sm"></header>
+
+  <!-- Main Viewport -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800 gap-2">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold">
+            <i data-lucide="store" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white">Store Identity & Branding</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">These details appear on your shop counter and customer printed tax invoices.</p>
+          </div>
+        </div>
+        <span class="text-[11px] font-mono px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 self-start sm:self-auto">
+          Neon Live Sync
+        </span>
+      </div>
+
+      <form onsubmit="handleSaveShopProfile(event)" class="space-y-4 text-xs">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Shop / Trading Name</label>
+            <input type="text" id="setting-shop-name" required placeholder="e.g. Modern Traders" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition text-sm font-bold">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">GSTIN Number</label>
+            <input type="text" id="setting-gstin" placeholder="29AAAAA0000A1Z5" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition font-mono uppercase text-sm">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Business Tagline / Nature of Goods</label>
+          <input type="text" id="setting-tagline" placeholder="Wholesale & Retail Counter" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Shop Contact Phone / Mobile</label>
+            <input type="tel" id="setting-phone" placeholder="+91 90000 00000" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition font-mono">
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Vendor / Admin Display Name</label>
+            <input type="text" id="setting-vendor-name" placeholder="e.g. Ramesh" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Complete Store Address</label>
+          <textarea id="setting-address" rows="3" placeholder="Shop Address, City, State - PIN" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition"></textarea>
+        </div>
+
+        <div class="pt-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+          <span id="setting-status-msg" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hidden">✓ Shop settings saved successfully</span>
+          <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-md shadow-emerald-600/20 flex items-center gap-2 ml-auto cursor-pointer">
+            <i data-lucide="check" class="w-4 h-4"></i> Save Shop Profile
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+
+  </main>
+
+  <script src="/public/js/shared.js"></script>
+  <script>
+    const currentUser = requireAuth('MANAGER');
+
+    function populateProfileForm() {
+      if (!currentUser) return;
+      document.getElementById('setting-shop-name').value = currentUser.shopName || '';
+      document.getElementById('setting-gstin').value = currentUser.gstin || '';
+      document.getElementById('setting-tagline').value = currentUser.tagline || '';
+      document.getElementById('setting-phone').value = currentUser.phone || '';
+      document.getElementById('setting-vendor-name').value = currentUser.name || '';
+      document.getElementById('setting-address').value = currentUser.address || '';
+    }
+
+    async function handleSaveShopProfile(e) {
+      e.preventDefault();
+      const shopName = document.getElementById('setting-shop-name').value.trim();
+      const gstin = document.getElementById('setting-gstin').value.trim();
+      const tagline = document.getElementById('setting-tagline').value.trim();
+      const phone = document.getElementById('setting-phone').value.trim();
+      const name = document.getElementById('setting-vendor-name').value.trim();
+      const address = document.getElementById('setting-address').value.trim();
+
+      try {
+        const res = await fetch('/api/vendor/profile', {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ shopName, gstin, tagline, phone, name, address })
+        });
+
+        if (res.ok) {
+          const updated = await res.json();
+          currentUser.shopName = updated.shop_name;
+          currentUser.gstin = updated.gstin;
+          currentUser.tagline = updated.tagline;
+          currentUser.phone = updated.phone;
+          currentUser.name = updated.name;
+          currentUser.address = updated.address;
+
+          saveUser(currentUser);
+          renderNavbar('settings');
+
+          const statusMsg = document.getElementById('setting-status-msg');
+          statusMsg.classList.remove('hidden');
+          setTimeout(() => statusMsg.classList.add('hidden'), 4000);
+        } else {
+          alert('Failed to update shop profile.');
+        }
+      } catch (err) {
+        alert('Error saving shop profile: ' + err.message);
+      }
+    }
+
+    window.onload = () => {
+      renderNavbar('settings');
+      populateProfileForm();
+    };
+  </script>
+</body>
+</html>
