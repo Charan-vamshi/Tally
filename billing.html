@@ -455,16 +455,24 @@
     function calculateBillTotals() {
       let subtotal = 0;
       let totalGst = 0;
+      let grandTotal = 0;
 
       billItems.forEach(item => {
-        const lineTaxable = item.rate * item.qty;
-        const lineTax = (lineTaxable * item.gst) / 100;
+        const lineTotal = (parseFloat(item.rate) || 0) * (parseFloat(item.qty) || 0);
+        const gstRate = parseFloat(item.gst) || 0;
+        const lineTaxable = lineTotal / (1 + (gstRate / 100));
+        const lineTax = lineTotal - lineTaxable;
+
         subtotal += lineTaxable;
         totalGst += lineTax;
+        grandTotal += lineTotal;
       });
 
-      const grandTotal = Math.round(subtotal + totalGst);
-      return { subtotal, totalGst, grandTotal };
+      return {
+        subtotal: parseFloat(subtotal.toFixed(2)),
+        totalGst: parseFloat(totalGst.toFixed(2)),
+        grandTotal: Math.round(grandTotal)
+      };
     }
 
     function renderBill() {
@@ -488,13 +496,13 @@
       btnPrint.disabled = false;
 
       billItems.forEach((item, index) => {
-        const itemTotal = (item.rate * item.qty) * (1 + item.gst / 100);
+        const itemTotal = (parseFloat(item.rate) || 0) * (parseFloat(item.qty) || 0);
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50";
         tr.innerHTML = `
           <td class="py-2.5 font-medium text-slate-800 dark:text-slate-200">
             ${item.name}
-            <span class="block text-[10px] text-slate-400 font-mono">HSN: ${item.hsn} | GST: ${item.gst}%</span>
+            <span class="block text-[10px] text-slate-400 font-mono">HSN: ${item.hsn || '-'} | GST: ${item.gst}%</span>
           </td>
           <td class="py-2.5 text-center">
             <div class="inline-flex items-center gap-1 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 px-1 py-0.5">
@@ -503,7 +511,7 @@
               <button onclick="updateBillQty(${index}, 1)" class="w-4 h-4 text-slate-500 hover:text-emerald-600 font-bold flex items-center justify-center">+</button>
             </div>
           </td>
-          <td class="py-2.5 text-right font-mono text-slate-700 dark:text-slate-300">₹${item.rate.toFixed(2)}</td>
+          <td class="py-2.5 text-right font-mono text-slate-700 dark:text-slate-300">₹${parseFloat(item.rate).toFixed(2)}</td>
           <td class="py-2.5 text-right font-mono font-bold text-slate-900 dark:text-white">₹${itemTotal.toFixed(2)}</td>
           <td class="py-2.5 text-right">
             <button onclick="removeBillItem(${index})" class="text-slate-400 hover:text-rose-500"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
@@ -587,14 +595,16 @@
       const items = Array.isArray(inv.items) ? inv.items : JSON.parse(inv.items || '[]');
 
       items.forEach((item, idx) => {
-        const lineTotal = (item.rate * item.qty) * (1 + item.gst / 100);
+        const rate = parseFloat(item.rate || 0);
+        const qty = parseFloat(item.qty || 1);
+        const lineTotal = rate * qty;
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="p-1.5 border-r border-slate-900 text-center font-mono">${idx + 1}</td>
           <td class="p-1.5 border-r border-slate-900 font-semibold">${item.name}</td>
-          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.hsn}</td>
-          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.qty} ${item.unit}</td>
-          <td class="p-1.5 border-r border-slate-900 text-right font-mono">${item.rate.toFixed(2)}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.hsn || '-'}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${qty} ${item.unit || 'Unit'}</td>
+          <td class="p-1.5 border-r border-slate-900 text-right font-mono">${rate.toFixed(2)}</td>
           <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.gst}%</td>
           <td class="p-1.5 text-right font-mono font-bold">${lineTotal.toFixed(2)}</td>
         `;

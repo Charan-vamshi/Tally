@@ -332,14 +332,16 @@
       const items = Array.isArray(inv.items) ? inv.items : JSON.parse(inv.items || '[]');
 
       items.forEach((item, idx) => {
-        const lineTotal = (item.rate * item.qty) * (1 + item.gst / 100);
+        const rate = parseFloat(item.rate || 0);
+        const qty = parseFloat(item.qty || 1);
+        const lineTotal = rate * qty;
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="p-1.5 border-r border-slate-900 text-center font-mono">${idx + 1}</td>
           <td class="p-1.5 border-r border-slate-900 font-semibold">${item.name}</td>
-          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.hsn}</td>
-          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.qty} ${item.unit}</td>
-          <td class="p-1.5 border-r border-slate-900 text-right font-mono">${item.rate.toFixed(2)}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.hsn || '-'}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${qty} ${item.unit || 'Unit'}</td>
+          <td class="p-1.5 border-r border-slate-900 text-right font-mono">${rate.toFixed(2)}</td>
           <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.gst}%</td>
           <td class="p-1.5 text-right font-mono font-bold">${lineTotal.toFixed(2)}</td>
         `;

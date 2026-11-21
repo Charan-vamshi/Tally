@@ -613,9 +613,9 @@
         const rate = parseFloat(item.rate || 0);
         const qty = parseFloat(item.qty || 1);
         const gst = parseFloat(item.gst || 0);
-        const lineTaxable = rate * qty;
-        const lineTax = (lineTaxable * gst) / 100;
-        const lineTotal = lineTaxable + lineTax;
+        const lineTotal = rate * qty;
+        const lineTaxable = lineTotal / (1 + (gst / 100));
+        const lineTax = lineTotal - lineTaxable;
 
         taxableSum += lineTaxable;
         taxSum += lineTax;
