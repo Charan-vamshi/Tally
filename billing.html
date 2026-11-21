@@ -577,7 +577,7 @@
       document.getElementById('modal-shop-signatory').textContent = `For ${sName.toUpperCase()}`;
 
       document.getElementById('modal-bill-no').textContent = inv.invoice_no;
-      document.getElementById('modal-bill-date').textContent = new Date(inv.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      document.getElementById('modal-bill-date').textContent = new Date(inv.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
       document.getElementById('modal-bill-mode').textContent = inv.payment_mode;
       document.getElementById('modal-bill-cust').textContent = inv.customer_name;
       document.getElementById('modal-bill-phone').textContent = inv.customer_phone || '-';

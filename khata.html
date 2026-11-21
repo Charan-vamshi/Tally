@@ -22,6 +22,14 @@
       }
     };
   </script>
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #bill-detail-modal, #bill-detail-modal * { visibility: visible; }
+      #bill-detail-modal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 0; background: white; }
+      .no-print { display: none !important; }
+    }
+  </style>
 </head>
 <body class="h-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col font-sans transition-colors duration-200">
 
@@ -29,63 +37,267 @@
   <header id="app-header" class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-sm"></header>
 
   <!-- Main Viewport -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col space-y-4">
 
-    <!-- Metrics Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/20 dark:bg-rose-950/20 shadow-sm">
-        <p class="text-xs font-medium text-rose-700 dark:text-rose-400">Total Udhar / Receivables</p>
-        <p id="stat-total-udhar" class="text-3xl font-bold text-rose-600 dark:text-rose-400 font-mono mt-1">₹0.00</p>
-        <span class="text-[11px] text-slate-500 dark:text-slate-400">Total outstanding balance from all farmers</span>
+    <!-- Top Stats & Controls Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div class="flex items-center gap-6">
+        <div>
+          <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Outstanding Udhar</span>
+          <p id="stat-total-udhar" class="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">₹0.00</p>
+        </div>
+        <div class="border-l border-slate-200 dark:border-slate-800 pl-6">
+          <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Registered Farmers</span>
+          <p id="stat-total-farmers" class="text-2xl font-black text-slate-900 dark:text-white font-mono">0</p>
+        </div>
       </div>
-      <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Active Farmers in Khata</p>
-        <p id="stat-total-farmers" class="text-3xl font-bold text-slate-900 dark:text-white font-mono mt-1">0</p>
-        <span class="text-[11px] text-slate-500 dark:text-slate-400">Registered store customers with credit line</span>
-      </div>
+      <button onclick="openNewFarmerModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition shadow-sm shadow-emerald-600/20 cursor-pointer">
+        <i data-lucide="user-plus" class="w-4 h-4"></i>
+        <span>Register New Farmer</span>
+      </button>
     </div>
 
-    <!-- Farmer Khata Ledger Table Card -->
-    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-      <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <span class="text-sm font-bold text-slate-900 dark:text-white">Farmer Credit Ledger</span>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Record cash/UPI repayments and track pending balances.</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="relative">
-            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5"></i>
-            <input type="text" id="khata-search" oninput="filterKhataTable()" placeholder="Search farmer or village..." class="pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-lg outline-none focus:ring-2 focus:ring-emerald-500">
+    <!-- Two-Panel Passbook Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-start">
+
+      <!-- LEFT PANEL: ALPHABETICAL FARMER DIRECTORY (Cols 1-4) -->
+      <div class="lg:col-span-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col overflow-hidden">
+        
+        <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Farmers (A &rarr; Z)</span>
+            <span id="farmer-filter-count" class="text-[11px] font-mono text-emerald-600 font-semibold">0 farmers</span>
           </div>
-          <button onclick="openNewFarmerModal()" class="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1 transition cursor-pointer">
-            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Register Farmer
-          </button>
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+            <input type="text" id="farmer-search" oninput="filterFarmerList()" placeholder="Search farmer name or village..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
+          </div>
         </div>
+
+        <!-- Scrollable Farmer List -->
+        <div id="farmers-list-container" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[640px] overflow-y-auto">
+          <!-- Populated by JS -->
+        </div>
+
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th class="py-3 px-4">Farmer Name</th>
-              <th class="py-3 px-4">Village</th>
-              <th class="py-3 px-4 font-mono">Mobile</th>
-              <th class="py-3 px-4 text-right">Outstanding Udhar</th>
-              <th class="py-3 px-4">Last Transaction</th>
-              <th class="py-3 px-4 text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody id="khata-table-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
-          </tbody>
-        </table>
+      <!-- RIGHT PANEL: DETAILED PASSBOOK STATEMENT (Cols 5-12) -->
+      <div class="lg:col-span-8 flex flex-col space-y-4">
+
+        <!-- Default Empty State (No Farmer Selected) -->
+        <div id="no-farmer-selected" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-12 text-center flex flex-col items-center justify-center min-h-[450px]">
+          <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mb-4">
+            <i data-lucide="book-open" class="w-8 h-8"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Select a Farmer Account</h3>
+          <p class="text-xs text-slate-400 dark:text-slate-500 max-w-sm mt-1">Tap any farmer from the alphabetical directory on the left to inspect their Khata passbook, recent bills, and payment records.</p>
+        </div>
+
+        <!-- Active Farmer Passbook Statement (Visible when selected) -->
+        <div id="farmer-passbook-view" class="hidden space-y-4">
+          
+          <!-- Farmer Header Summary Card -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div id="passbook-avatar" class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white font-black text-lg flex items-center justify-center shadow-md shadow-emerald-600/20">
+                R
+              </div>
+              <div>
+                <h2 id="passbook-farmer-name" class="text-lg font-bold text-slate-900 dark:text-white leading-tight">Ramesh Gowda</h2>
+                <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <span id="passbook-farmer-village"><i data-lucide="map-pin" class="w-3 h-3 inline mr-0.5 text-slate-400"></i> Hosur</span>
+                  <span>&bull;</span>
+                  <span id="passbook-farmer-phone" class="font-mono"><i data-lucide="phone" class="w-3 h-3 inline mr-0.5 text-slate-400"></i> 9876543210</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 self-end sm:self-auto">
+              <div class="text-right">
+                <span class="text-[10px] font-semibold uppercase text-slate-400">Outstanding Due</span>
+                <p id="passbook-outstanding" class="text-2xl font-black font-mono text-rose-600 dark:text-rose-400 leading-none">₹0.00</p>
+              </div>
+              <button onclick="openRecordPaymentModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow-sm shadow-emerald-600/20 cursor-pointer">
+                <i data-lucide="badge-indian-rupee" class="w-4 h-4"></i>
+                <span>Record Payment</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Passbook Transactions Stream -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div class="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Transaction History (Newest to Oldest)</span>
+              <span class="text-[11px] text-slate-400">Tap any bill to view items breakdown</span>
+            </div>
+
+            <div id="passbook-transactions-list" class="divide-y divide-slate-100 dark:divide-slate-800">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </div>
+
       </div>
+
     </div>
 
   </main>
 
+  <!-- ========================================================================= -->
+  <!-- BILL BREAKDOWN & PRINT MODAL -->
+  <!-- ========================================================================= -->
+  <div id="bill-detail-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white text-slate-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative my-8 print:m-0 print:p-0 print:shadow-none print:w-full">
+      <div class="no-print flex items-center justify-between pb-4 mb-4 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-bold text-slate-900">Invoice Details</span>
+          <span id="detail-bill-status-badge" class="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700">ACTIVE</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="window.print()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm cursor-pointer">
+            <i data-lucide="printer" class="w-4 h-4"></i> Print Bill
+          </button>
+          <button onclick="closeBillDetailModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg cursor-pointer">
+            Close
+          </button>
+        </div>
+      </div>
+
+      <div class="border-2 border-slate-900 p-4 font-sans text-xs text-slate-900 leading-normal bg-white">
+        <div class="text-center pb-3 border-b-2 border-slate-900">
+          <h2 id="detail-shop-name" class="text-lg font-extrabold tracking-wide uppercase">Store Counter</h2>
+          <p id="detail-shop-tagline" class="text-[11px] font-semibold">Retail & Wholesale Tax Invoice</p>
+          <p id="detail-shop-addr" class="text-[11px]"></p>
+          <p class="text-[11px] font-mono mt-0.5"><strong>GSTIN:</strong> <span id="detail-shop-gstin">-</span> | <strong>Phone:</strong> <span id="detail-shop-phone">-</span></p>
+        </div>
+
+        <div class="text-center font-bold uppercase py-1 border-b border-slate-900 tracking-wider bg-slate-100">
+          Tax Invoice (Khata Credit)
+        </div>
+
+        <div class="grid grid-cols-2 border-b border-slate-900 text-[11px]">
+          <div class="p-2 border-r border-slate-900 space-y-0.5">
+            <p><strong>Invoice No:</strong> <span id="detail-bill-no" class="font-mono">-</span></p>
+            <p><strong>Date & Time:</strong> <span id="detail-bill-date">-</span></p>
+            <p><strong>Payment Mode:</strong> <span id="detail-bill-mode" class="font-semibold uppercase text-rose-600">Credit / Udhar</span></p>
+          </div>
+          <div class="p-2 space-y-0.5">
+            <p><strong>Buyer / Farmer Name:</strong> <span id="detail-bill-cust">-</span></p>
+            <p><strong>Village:</strong> <span id="detail-bill-village">-</span></p>
+            <p><strong>Mobile:</strong> <span id="detail-bill-phone" class="font-mono">-</span></p>
+          </div>
+        </div>
+
+        <table class="w-full text-left border-collapse border-b border-slate-900 text-[11px]">
+          <thead>
+            <tr class="border-b border-slate-900 bg-slate-50 font-bold">
+              <th class="p-1.5 border-r border-slate-900 w-8 text-center">#</th>
+              <th class="p-1.5 border-r border-slate-900">Description of Goods</th>
+              <th class="p-1.5 border-r border-slate-900 font-mono text-center">HSN</th>
+              <th class="p-1.5 border-r border-slate-900 text-center">Qty</th>
+              <th class="p-1.5 border-r border-slate-900 text-right">Rate (₹)</th>
+              <th class="p-1.5 border-r border-slate-900 text-center">GST%</th>
+              <th class="p-1.5 text-right">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="detail-items-tbody" class="divide-y divide-slate-300">
+          </tbody>
+        </table>
+
+        <div class="grid grid-cols-12 border-b border-slate-900 text-[11px]">
+          <div class="col-span-7 p-2 border-r border-slate-900">
+            <p class="font-bold mb-1">Terms & Conditions:</p>
+            <ol class="list-decimal list-inside text-[10px] space-y-0.5 text-slate-700">
+              <li>Goods once sold will not be taken back without receipt.</li>
+              <li>Subject to local jurisdiction.</li>
+              <li>Certified that particulars given above are true and correct.</li>
+            </ol>
+          </div>
+          <div class="col-span-5 p-2 space-y-1 font-mono">
+            <div class="flex justify-between">
+              <span>Taxable Value:</span>
+              <span id="detail-subtotal">₹0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span>CGST:</span>
+              <span id="detail-cgst">₹0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span>SGST:</span>
+              <span id="detail-sgst">₹0.00</span>
+            </div>
+            <div class="flex justify-between font-bold text-xs pt-1 border-t border-slate-900 text-slate-900">
+              <span>Invoice Total:</span>
+              <span id="detail-grand-total">₹0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 pt-6 text-[10px]">
+          <div>
+            <p>Customer Signature</p>
+          </div>
+          <div class="text-right">
+            <p id="detail-shop-signatory" class="font-bold">Authorised Signatory</p>
+            <div class="h-10"></div>
+            <p>Authorised Signatory</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- RECORD REPAYMENT MODAL -->
+  <!-- ========================================================================= -->
+  <div id="payment-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Record Farmer Repayment</h3>
+          <p id="pay-modal-farmer-sub" class="text-xs text-slate-400">Farmer: -</p>
+        </div>
+        <button onclick="closeRecordPaymentModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form onsubmit="handleRecordPaymentSubmit(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Repayment Amount (₹)</label>
+          <input type="number" step="0.01" id="pay-amount-input" required placeholder="0.00" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl text-base font-bold font-mono outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Payment Mode</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-800/60 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50 dark:has-[:checked]:bg-emerald-950/40">
+              <input type="radio" name="pay-mode" value="Cash" checked class="text-emerald-600 focus:ring-emerald-500">
+              <span class="font-semibold text-slate-800 dark:text-slate-200">Cash</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer bg-slate-50 dark:bg-slate-800/60 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/50 dark:has-[:checked]:bg-emerald-950/40">
+              <input type="radio" name="pay-mode" value="UPI" class="text-emerald-600 focus:ring-emerald-500">
+              <span class="font-semibold text-slate-800 dark:text-slate-200">UPI / Online</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Notes / Receipt Ref (Optional)</label>
+          <input type="text" id="pay-notes-input" placeholder="e.g., Paid at counter" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-md shadow-emerald-600/20 cursor-pointer">
+          Confirm & Save Payment
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- REGISTER NEW FARMER MODAL -->
+  <!-- ========================================================================= -->
   <div id="add-farmer-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-5 shadow-xl border border-slate-200 dark:border-slate-800">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-800">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <h3 class="text-sm font-bold text-slate-900 dark:text-white">Register New Farmer for Khata</h3>
         <button onclick="closeNewFarmerModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -118,99 +330,359 @@
   <script>
     const currentUser = requireAuth('MANAGER');
     let farmers = [];
+    let selectedFarmerId = null;
+    let selectedFarmerStatement = null;
 
     async function loadFarmers() {
       try {
         const res = await fetch('/api/farmers', { headers: getAuthHeaders() });
-        if (res.ok) farmers = await res.json();
+        if (res.ok) {
+          const list = await res.json();
+          // Sort strictly alphabetical A -> Z by name
+          farmers = list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        }
       } catch (err) { farmers = []; }
-      renderKhataTable();
-      updateKhataMetrics();
-    }
+      
+      updateKhataStats();
+      renderFarmerDirectory();
 
-    function renderKhataTable(filter = '') {
-      const tbody = document.getElementById('khata-table-tbody');
-      tbody.innerHTML = '';
-
-      const query = (filter || '').toLowerCase().trim();
-      const filtered = farmers.filter(f => (f.name || '').toLowerCase().includes(query) || (f.village || '').toLowerCase().includes(query));
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" class="py-12 text-center text-slate-400 dark:text-slate-500">
-              <i data-lucide="users" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-              No farmers found in Khata ledger. Click "Register Farmer" to create an account.
-            </td>
-          </tr>
-        `;
-        lucide.createIcons();
-        return;
-      }
-
-      filtered.forEach(f => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40";
-        tr.innerHTML = `
-          <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">${f.name}</td>
-          <td class="py-3 px-4 text-slate-500 dark:text-slate-400">${f.village || '-'}</td>
-          <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">${f.phone || '-'}</td>
-          <td class="py-3 px-4 text-right font-mono font-bold text-rose-600 dark:text-rose-400">₹${parseFloat(f.outstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-          <td class="py-3 px-4 text-slate-500 dark:text-slate-400 text-[11px]">${f.lastTx || 'None'}</td>
-          <td class="py-3 px-4 text-center">
-            <button onclick="recordKhataPaymentPrompt(${f.id})" class="px-2.5 py-1 text-xs bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 rounded-lg font-medium transition cursor-pointer">Record Payment</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-      lucide.createIcons();
-    }
-
-    function filterKhataTable() {
-      renderKhataTable(document.getElementById('khata-search').value);
-    }
-
-    async function recordKhataPaymentPrompt(farmerId) {
-      const farmer = farmers.find(f => f.id === farmerId);
-      if (!farmer) return;
-      const amount = prompt(`Record Cash/UPI payment received from ${farmer.name} (Current Due: ₹${farmer.outstanding}):`, "1000");
-      if (amount && !isNaN(amount)) {
-        await fetch(`/api/farmers/${farmerId}/payment`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ amount: parseFloat(amount) })
-        });
-        loadFarmers();
+      // If a farmer was already selected, refresh their statement
+      if (selectedFarmerId) {
+        selectFarmer(selectedFarmerId);
       }
     }
 
-    function updateKhataMetrics() {
+    function updateKhataStats() {
       let totalDue = 0;
       farmers.forEach(f => { totalDue += parseFloat(f.outstanding || 0); });
       document.getElementById('stat-total-udhar').textContent = `₹${totalDue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
       document.getElementById('stat-total-farmers').textContent = farmers.length;
     }
 
+    function renderFarmerDirectory(filter = '') {
+      const container = document.getElementById('farmers-list-container');
+      const countEl = document.getElementById('farmer-filter-count');
+      container.innerHTML = '';
+
+      const query = (filter || '').toLowerCase().trim();
+      const filtered = farmers.filter(f => (f.name || '').toLowerCase().includes(query) || (f.village || '').toLowerCase().includes(query));
+
+      countEl.textContent = `${filtered.length} of ${farmers.length}`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-400 text-xs">
+            <i data-lucide="user-x" class="w-6 h-6 mx-auto mb-1 opacity-40"></i>
+            No farmers found. Click "Register New Farmer" above.
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach(f => {
+        const isSelected = selectedFarmerId === f.id;
+        const initial = (f.name || 'F').charAt(0).toUpperCase();
+        const due = parseFloat(f.outstanding || 0);
+
+        const div = document.createElement('div');
+        div.onclick = () => selectFarmer(f.id);
+        div.className = `p-3.5 flex items-center justify-between gap-3 cursor-pointer transition select-none ${
+          isSelected 
+            ? 'bg-emerald-50 dark:bg-emerald-950/40 border-l-4 border-emerald-600' 
+            : 'hover:bg-slate-50 dark:hover:bg-slate-800/40 border-l-4 border-transparent'
+        }`;
+
+        div.innerHTML = `
+          <div class="flex items-center gap-3 overflow-hidden">
+            <div class="w-9 h-9 rounded-xl ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'} font-bold text-sm flex items-center justify-center shrink-0">
+              ${initial}
+            </div>
+            <div class="overflow-hidden">
+              <h4 class="font-bold text-xs text-slate-900 dark:text-white truncate">${f.name}</h4>
+              <p class="text-[11px] text-slate-400 truncate">${f.village || 'No village'} • ${f.phone || '-'}</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="font-mono font-bold text-xs ${due > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
+              ₹${due.toLocaleString('en-IN', { minimumFractionDigits: 0 })}
+            </span>
+            <span class="block text-[9px] uppercase tracking-wider ${due > 0 ? 'text-rose-500' : 'text-emerald-500'}">${due > 0 ? 'Due' : 'Settled'}</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      lucide.createIcons();
+    }
+
+    function filterFarmerList() {
+      renderFarmerDirectory(document.getElementById('farmer-search').value);
+    }
+
+    async function selectFarmer(farmerId) {
+      selectedFarmerId = farmerId;
+      renderFarmerDirectory(document.getElementById('farmer-search').value);
+
+      const emptyView = document.getElementById('no-farmer-selected');
+      const passbookView = document.getElementById('farmer-passbook-view');
+
+      emptyView.classList.add('hidden');
+      passbookView.classList.remove('hidden');
+
+      const transList = document.getElementById('passbook-transactions-list');
+      transList.innerHTML = '<p class="p-8 text-center text-xs text-slate-400">Loading Khata passbook...</p>';
+
+      try {
+        const res = await fetch(`/api/farmers/${farmerId}/statement`, { headers: getAuthHeaders() });
+        if (!res.ok) throw new Error('Failed to load passbook');
+
+        const data = await res.json();
+        selectedFarmerStatement = data;
+
+        const f = data.farmer;
+        document.getElementById('passbook-avatar').textContent = (f.name || 'F').charAt(0).toUpperCase();
+        document.getElementById('passbook-farmer-name').textContent = f.name;
+        document.getElementById('passbook-farmer-village').innerHTML = `<i data-lucide="map-pin" class="w-3 h-3 inline mr-0.5 text-slate-400"></i> ${f.village || 'No village'}`;
+        document.getElementById('passbook-farmer-phone').innerHTML = `<i data-lucide="phone" class="w-3 h-3 inline mr-0.5 text-slate-400"></i> ${f.phone || '-'}`;
+        document.getElementById('passbook-outstanding').textContent = `₹${parseFloat(f.outstanding || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+        renderPassbookTransactions(data.transactions);
+      } catch (err) {
+        transList.innerHTML = `<p class="p-8 text-center text-xs text-rose-500">Error loading passbook: ${err.message}</p>`;
+      }
+    }
+
+    function renderPassbookTransactions(transactions) {
+      const container = document.getElementById('passbook-transactions-list');
+      container.innerHTML = '';
+
+      if (!transactions || transactions.length === 0) {
+        container.innerHTML = `
+          <div class="p-10 text-center text-slate-400 text-xs">
+            <i data-lucide="receipt" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>
+            No bills or payments recorded yet for this farmer.
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      transactions.forEach(tx => {
+        const isBill = tx.type === 'BILL';
+        const dateObj = new Date(tx.date);
+        const dateStr = dateObj.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
+        const timeStr = dateObj.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+
+        const row = document.createElement('div');
+        row.className = `p-4 flex items-center justify-between gap-4 transition ${
+          isBill ? 'hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer group' : 'bg-slate-50/30 dark:bg-slate-900/40'
+        }`;
+
+        if (isBill) {
+          row.onclick = () => openBillDetailModal(tx);
+        }
+
+        // Summary of items if available
+        let desc = '';
+        if (isBill) {
+          const itemsList = tx.items || [];
+          if (itemsList.length > 0) {
+            desc = itemsList.map(it => `${it.name} (${it.qty} ${it.unit})`).join(', ');
+          } else {
+            desc = 'Agri Store Purchase';
+          }
+        } else {
+          desc = tx.notes ? `${tx.notes} • ${tx.paymentMode}` : `Repayment received via ${tx.paymentMode}`;
+        }
+
+        row.innerHTML = `
+          <div class="flex items-center gap-3.5 overflow-hidden">
+            <div class="w-10 h-10 rounded-xl ${isBill ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600' : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600'} flex items-center justify-center shrink-0">
+              <i data-lucide="${isBill ? 'receipt' : 'check-circle'}" class="w-5 h-5"></i>
+            </div>
+            <div class="overflow-hidden">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-xs ${isBill ? 'text-slate-900 dark:text-white group-hover:text-emerald-600' : 'text-slate-900 dark:text-white'}">
+                  ${isBill ? `Bill #${tx.invoiceNo}` : `Payment Received`}
+                </span>
+                <span class="text-[10px] font-mono px-2 py-0.2 rounded-full font-bold ${
+                  isBill ? 'bg-rose-100 dark:bg-rose-950 text-rose-700' : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700'
+                }">
+                  ${isBill ? 'Udhar Bill' : 'Jama / Paid'}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${desc}</p>
+              <span class="text-[10px] font-mono text-slate-400">${dateStr} at ${timeStr}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="text-right">
+              <span class="font-mono font-bold text-sm ${isBill ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
+                ${isBill ? `+₹${tx.amount.toFixed(2)}` : `-₹${tx.amount.toFixed(2)}`}
+              </span>
+              <span class="block text-[10px] text-slate-400 font-mono">${isBill ? 'Added to due' : 'Deducted'}</span>
+            </div>
+            ${isBill ? '<i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-emerald-600 transition"></i>' : ''}
+          </div>
+        `;
+
+        container.appendChild(row);
+      });
+
+      lucide.createIcons();
+    }
+
+    // --- BILL DRILL-DOWN MODAL ---
+    function openBillDetailModal(tx) {
+      if (!tx || tx.type !== 'BILL') return;
+
+      const farmer = selectedFarmerStatement ? selectedFarmerStatement.farmer : {};
+      const sName = currentUser.shopName || (currentUser.name ? `${currentUser.name}'s Store` : 'Store Counter');
+      const sTag = currentUser.tagline || 'Retail Counter';
+      const sGstin = currentUser.gstin || '-';
+      const sPhone = currentUser.phone || '-';
+      const sAddr = currentUser.address || '';
+
+      document.getElementById('detail-shop-name').textContent = sName;
+      document.getElementById('detail-shop-tagline').textContent = sTag;
+      document.getElementById('detail-shop-addr').textContent = sAddr;
+      document.getElementById('detail-shop-gstin').textContent = sGstin;
+      document.getElementById('detail-shop-phone').textContent = sPhone;
+      document.getElementById('detail-shop-signatory').textContent = `For ${sName.toUpperCase()}`;
+
+      document.getElementById('detail-bill-no').textContent = tx.invoiceNo;
+      
+      const dateObj = new Date(tx.date);
+      document.getElementById('detail-bill-date').textContent = `${dateObj.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })} (${dateObj.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })})`;
+      document.getElementById('detail-bill-mode').textContent = tx.paymentMode || 'Credit / Udhar';
+      document.getElementById('detail-bill-cust').textContent = farmer.name || '-';
+      document.getElementById('detail-bill-village').textContent = farmer.village || '-';
+      document.getElementById('detail-bill-phone').textContent = farmer.phone || '-';
+      document.getElementById('detail-bill-status-badge').textContent = tx.status;
+
+      const tbody = document.getElementById('detail-items-tbody');
+      tbody.innerHTML = '';
+      const items = tx.items || [];
+
+      let taxableSum = 0;
+      let taxSum = 0;
+
+      items.forEach((item, idx) => {
+        const rate = parseFloat(item.rate || 0);
+        const qty = parseFloat(item.qty || 1);
+        const gst = parseFloat(item.gst || 0);
+        const lineTaxable = rate * qty;
+        const lineTax = (lineTaxable * gst) / 100;
+        const lineTotal = lineTaxable + lineTax;
+
+        taxableSum += lineTaxable;
+        taxSum += lineTax;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${idx + 1}</td>
+          <td class="p-1.5 border-r border-slate-900 font-semibold">${item.name}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${item.hsn || '-'}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${qty} ${item.unit || 'Unit'}</td>
+          <td class="p-1.5 border-r border-slate-900 text-right font-mono">${rate.toFixed(2)}</td>
+          <td class="p-1.5 border-r border-slate-900 text-center font-mono">${gst}%</td>
+          <td class="p-1.5 text-right font-mono font-bold">${lineTotal.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('detail-subtotal').textContent = `₹${taxableSum.toFixed(2)}`;
+      document.getElementById('detail-cgst').textContent = `₹${(taxSum / 2).toFixed(2)}`;
+      document.getElementById('detail-sgst').textContent = `₹${(taxSum / 2).toFixed(2)}`;
+      document.getElementById('detail-grand-total').textContent = `₹${parseFloat(tx.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+      document.getElementById('bill-detail-modal').classList.remove('hidden');
+    }
+
+    function closeBillDetailModal() {
+      document.getElementById('bill-detail-modal').classList.add('hidden');
+    }
+
+    // --- RECORD REPAYMENT MODAL ---
+    function openRecordPaymentModal() {
+      if (!selectedFarmerId) return;
+      const f = farmers.find(item => item.id === selectedFarmerId);
+      if (!f) return;
+
+      document.getElementById('pay-modal-farmer-sub').textContent = `Farmer: ${f.name} (Current Due: ₹${parseFloat(f.outstanding || 0).toLocaleString('en-IN')})`;
+      document.getElementById('pay-amount-input').value = '';
+      document.getElementById('pay-notes-input').value = '';
+      document.getElementById('payment-modal').classList.remove('hidden');
+    }
+
+    function closeRecordPaymentModal() {
+      document.getElementById('payment-modal').classList.add('hidden');
+    }
+
+    async function handleRecordPaymentSubmit(e) {
+      e.preventDefault();
+      if (!selectedFarmerId) return;
+
+      const amount = parseFloat(document.getElementById('pay-amount-input').value || 0);
+      const mode = document.querySelector('input[name="pay-mode"]:checked').value;
+      const notes = document.getElementById('pay-notes-input').value.trim();
+
+      if (amount <= 0) {
+        alert('Please enter a valid payment amount.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/farmers/${selectedFarmerId}/payment`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ amount, paymentMode: mode, notes })
+        });
+
+        if (res.ok) {
+          closeRecordPaymentModal();
+          await loadFarmers();
+        } else {
+          alert('Failed to record repayment.');
+        }
+      } catch (err) {
+        alert('Network error recording payment: ' + err.message);
+      }
+    }
+
+    // --- REGISTER NEW FARMER ---
     function openNewFarmerModal() { document.getElementById('add-farmer-modal').classList.remove('hidden'); }
     function closeNewFarmerModal() { document.getElementById('add-farmer-modal').classList.add('hidden'); }
 
     async function handleAddNewFarmer(e) {
       e.preventDefault();
       const farmerData = {
-        name: document.getElementById('nf-name').value,
-        village: document.getElementById('nf-village').value,
-        phone: document.getElementById('nf-phone').value,
+        name: document.getElementById('nf-name').value.trim(),
+        village: document.getElementById('nf-village').value.trim(),
+        phone: document.getElementById('nf-phone').value.trim(),
         outstanding: parseFloat(document.getElementById('nf-due').value || 0)
       };
 
       try {
-        await fetch('/api/farmers', {
+        const res = await fetch('/api/farmers', {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(farmerData)
         });
-        closeNewFarmerModal();
-        loadFarmers();
+        if (res.ok) {
+          const newFarmer = await res.json();
+          closeNewFarmerModal();
+          document.getElementById('nf-name').value = '';
+          document.getElementById('nf-village').value = '';
+          document.getElementById('nf-phone').value = '';
+          document.getElementById('nf-due').value = '0.00';
+          await loadFarmers();
+          selectFarmer(newFarmer.id);
+        } else {
+          alert('Failed to register farmer.');
+        }
       } catch (err) {
         alert('Error saving farmer: ' + err.message);
       }

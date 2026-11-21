@@ -15,6 +15,10 @@ if (DATABASE_URL) {
     connectionString: DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
+
+  pool.on('connect', (client) => {
+    client.query("SET timezone = 'Asia/Kolkata';");
+  });
 }
 
 // Auto-create database tables on start
@@ -22,7 +26,8 @@ async function initDatabase() {
   if (!pool) return;
   try {
     const client = await pool.connect();
-    console.log('Connected to PostgreSQL.');
+    await client.query("SET timezone = 'Asia/Kolkata';");
+    console.log('Connected to PostgreSQL (Timezone: Asia/Kolkata).');
     
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
@@ -112,6 +117,18 @@ async function initDatabase() {
       UPDATE products SET vendor_id = 1 WHERE vendor_id IS NULL;
       UPDATE farmers SET vendor_id = 1 WHERE vendor_id IS NULL;
       UPDATE invoices SET vendor_id = 1 WHERE vendor_id IS NULL;
+
+      -- Farmer Ledger Repayments Table
+      CREATE TABLE IF NOT EXISTS farmer_payments (
+        id SERIAL PRIMARY KEY,
+        farmer_id INT NOT NULL,
+        amount NUMERIC(10, 2) NOT NULL,
+        payment_mode VARCHAR(50) DEFAULT 'Cash',
+        notes TEXT,
+        vendor_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      ALTER TABLE farmer_payments ADD COLUMN IF NOT EXISTS vendor_id INT;
     `);
 
     client.release();
@@ -394,16 +411,101 @@ const server = http.createServer(async (req, res) => {
   if (pathname.match(/^\/api\/farmers\/(\d+)\/payment$/) && req.method === 'POST') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
     const vId = getVendorId();
-    const id = pathname.split('/')[3];
+    const id = parseInt(pathname.split('/')[3]);
     const b = await getBody(req);
     const amount = parseFloat(b.amount || 0);
-    const lastTx = `Today (Paid -₹${amount})`;
+    const paymentMode = b.paymentMode || 'Cash';
+    const notes = b.notes || '';
+    const lastTx = `Today (Paid -₹${amount} via ${paymentMode})`;
+
+    // 1. Record in farmer_payments ledger
+    await pool.query(
+      `INSERT INTO farmer_payments (farmer_id, amount, payment_mode, notes, vendor_id) VALUES ($1, $2, $3, $4, $5)`,
+      [id, amount, paymentMode, notes, vId > 0 ? vId : 1]
+    );
+
+    // 2. Deduct from outstanding balance
     const q = vId > 0
       ? 'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE id = $3 AND vendor_id = $4 RETURNING *'
       : 'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE id = $3 RETURNING *';
     const params = vId > 0 ? [amount, lastTx, id, vId] : [amount, lastTx, id];
     const r = await pool.query(q, params);
     return sendJson(r.rows[0]);
+  }
+
+  // GET Farmer Statement & Passbook Transactions (Chronological Newest -> Oldest)
+  if (pathname.match(/^\/api\/farmers\/(\d+)\/statement$/) && req.method === 'GET') {
+    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
+    const id = parseInt(pathname.split('/')[3]);
+
+    // 1. Get farmer profile
+    const fQuery = vId > 0
+      ? 'SELECT id, name, village, phone, outstanding, created_at FROM farmers WHERE id = $1 AND vendor_id = $2'
+      : 'SELECT id, name, village, phone, outstanding, created_at FROM farmers WHERE id = $1';
+    const fParams = vId > 0 ? [id, vId] : [id];
+    const fRes = await pool.query(fQuery, fParams);
+    if (fRes.rows.length === 0) return sendJson({ error: 'Farmer not found' }, 404);
+    const farmer = fRes.rows[0];
+
+    // 2. Get all invoices for this farmer
+    const invQuery = vId > 0
+      ? `SELECT id, invoice_no, payment_mode, subtotal, cgst, sgst, grand_total, items, status, created_at 
+         FROM invoices 
+         WHERE (customer_name = $1 OR customer_name ILIKE $1) 
+           AND vendor_id = $2 
+         ORDER BY id DESC`
+      : `SELECT id, invoice_no, payment_mode, subtotal, cgst, sgst, grand_total, items, status, created_at 
+         FROM invoices 
+         WHERE (customer_name = $1 OR customer_name ILIKE $1) 
+         ORDER BY id DESC`;
+    const invParams = vId > 0 ? [farmer.name, vId] : [farmer.name];
+    const invRes = await pool.query(invQuery, invParams);
+
+    // 3. Get all repayments for this farmer
+    const payQuery = vId > 0
+      ? 'SELECT id, amount, payment_mode, notes, created_at FROM farmer_payments WHERE farmer_id = $1 AND vendor_id = $2 ORDER BY id DESC'
+      : 'SELECT id, amount, payment_mode, notes, created_at FROM farmer_payments WHERE farmer_id = $1 ORDER BY id DESC';
+    const payParams = vId > 0 ? [id, vId] : [id];
+    const payRes = await pool.query(payQuery, payParams);
+
+    // 4. Combine into unified ledger statement
+    const transactions = [];
+
+    invRes.rows.forEach(inv => {
+      transactions.push({
+        type: 'BILL',
+        id: inv.id,
+        invoiceNo: inv.invoice_no,
+        amount: parseFloat(inv.grand_total || 0),
+        paymentMode: inv.payment_mode,
+        status: inv.status || 'ACTIVE',
+        items: typeof inv.items === 'string' ? JSON.parse(inv.items || '[]') : (inv.items || []),
+        createdAt: inv.created_at,
+        date: inv.created_at
+      });
+    });
+
+    payRes.rows.forEach(p => {
+      transactions.push({
+        type: 'PAYMENT',
+        id: p.id,
+        amount: parseFloat(p.amount || 0),
+        paymentMode: p.payment_mode || 'Cash',
+        notes: p.notes || '',
+        status: 'PAID',
+        createdAt: p.created_at,
+        date: p.created_at
+      });
+    });
+
+    // Sort newest to oldest
+    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return sendJson({
+      farmer,
+      transactions
+    });
   }
 
   // GET Invoices (Scoped to current vendor)
@@ -541,8 +643,8 @@ const server = http.createServer(async (req, res) => {
     try {
       const vId = getVendorId();
       const whereClause = vId > 0
-        ? `WHERE vendor_id = $1 AND COALESCE(status, 'ACTIVE') = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`
-        : `WHERE COALESCE(status, 'ACTIVE') = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`;
+        ? `WHERE vendor_id = $1 AND COALESCE(status, 'ACTIVE') = 'ACTIVE' AND DATE(created_at AT TIME ZONE 'Asia/Kolkata') = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE`
+        : `WHERE COALESCE(status, 'ACTIVE') = 'ACTIVE' AND DATE(created_at AT TIME ZONE 'Asia/Kolkata') = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE`;
       const params = vId > 0 ? [vId] : [];
       const invRes = await pool.query(`
         SELECT 
