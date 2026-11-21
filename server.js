@@ -433,6 +433,25 @@ const server = http.createServer(async (req, res) => {
     return sendJson(r.rows[0]);
   }
 
+  // PUT Farmer Manual Balance Adjustment
+  if (pathname.match(/^\/api\/farmers\/(\d+)\/balance$/) && req.method === 'PUT') {
+    if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
+    const id = parseInt(pathname.split('/')[3]);
+    const b = await getBody(req);
+    const amount = Math.max(0, parseFloat(b.amount ?? b.outstanding ?? 0));
+    const reason = b.reason || 'Manual Adjustment';
+    const lastTx = `Adjusted to ₹${amount.toFixed(2)} (${reason})`;
+
+    const q = vId > 0
+      ? 'UPDATE farmers SET outstanding = $1, last_tx = $2 WHERE id = $3 AND vendor_id = $4 RETURNING *'
+      : 'UPDATE farmers SET outstanding = $1, last_tx = $2 WHERE id = $3 RETURNING *';
+    const params = vId > 0 ? [amount, lastTx, id, vId] : [amount, lastTx, id];
+    const r = await pool.query(q, params);
+    if (r.rows.length === 0) return sendJson({ error: 'Farmer not found' }, 404);
+    return sendJson(r.rows[0]);
+  }
+
   // GET Farmer Statement & Passbook Transactions (Chronological Newest -> Oldest)
   if (pathname.match(/^\/api\/farmers\/(\d+)\/statement$/) && req.method === 'GET') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
@@ -448,16 +467,20 @@ const server = http.createServer(async (req, res) => {
     if (fRes.rows.length === 0) return sendJson({ error: 'Farmer not found' }, 404);
     const farmer = fRes.rows[0];
 
-    // 2. Get all invoices for this farmer
+    // 2. Get all ACTIVE credit invoices for this farmer (exclude CANCELLED/deleted)
     const invQuery = vId > 0
-      ? `SELECT id, invoice_no, payment_mode, subtotal, cgst, sgst, grand_total, items, status, created_at 
+      ? `SELECT id, invoice_no, payment_mode, customer_type, subtotal, cgst, sgst, grand_total, items, status, created_at 
          FROM invoices 
-         WHERE (customer_name = $1 OR customer_name ILIKE $1) 
+         WHERE (TRIM(customer_name) ILIKE TRIM($1)) 
+           AND COALESCE(status, 'ACTIVE') = 'ACTIVE'
+           AND (payment_mode = 'Credit' OR payment_mode IS NULL)
            AND vendor_id = $2 
          ORDER BY id DESC`
-      : `SELECT id, invoice_no, payment_mode, subtotal, cgst, sgst, grand_total, items, status, created_at 
+      : `SELECT id, invoice_no, payment_mode, customer_type, subtotal, cgst, sgst, grand_total, items, status, created_at 
          FROM invoices 
-         WHERE (customer_name = $1 OR customer_name ILIKE $1) 
+         WHERE (TRIM(customer_name) ILIKE TRIM($1)) 
+           AND COALESCE(status, 'ACTIVE') = 'ACTIVE'
+           AND (payment_mode = 'Credit' OR payment_mode IS NULL)
          ORDER BY id DESC`;
     const invParams = vId > 0 ? [farmer.name, vId] : [farmer.name];
     const invRes = await pool.query(invQuery, invParams);
@@ -612,16 +635,16 @@ const server = http.createServer(async (req, res) => {
       }
 
       // 3. Reverse Khata debt if this was an Udhar bill
-      if (inv.payment_mode === 'Credit' && inv.customer_type === 'khata') {
+      if (inv.payment_mode === 'Credit') {
         const revertTx = `Bill ${inv.invoice_no} Cancelled (-₹${inv.grand_total})`;
         if (vId > 0) {
           await client.query(
-            'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE name = $3 AND vendor_id = $4',
+            'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE (TRIM(name) ILIKE TRIM($3)) AND vendor_id = $4',
             [inv.grand_total, revertTx, inv.customer_name, vId]
           );
         } else {
           await client.query(
-            'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE name = $3',
+            'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE (TRIM(name) ILIKE TRIM($3))',
             [inv.grand_total, revertTx, inv.customer_name]
           );
         }
