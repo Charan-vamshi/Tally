@@ -71,19 +71,36 @@ async function initDatabase() {
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) UNIQUE NOT NULL,
         name VARCHAR(255),
-        shop_name VARCHAR(255) DEFAULT 'Dattareya Enterprises',
-        tagline VARCHAR(255) DEFAULT 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
-        gstin VARCHAR(100) DEFAULT '29AAAAA0000A1Z5',
-        address TEXT DEFAULT 'Main Road, Market Yard, Karnataka - 586101',
-        phone VARCHAR(50) DEFAULT '+91 94480 00000',
+        shop_name VARCHAR(255),
+        tagline VARCHAR(255),
+        gstin VARCHAR(100),
+        address TEXT,
+        phone VARCHAR(50),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
-      ALTER TABLE managers ADD COLUMN IF NOT EXISTS shop_name VARCHAR(255) DEFAULT 'Dattareya Enterprises';
-      ALTER TABLE managers ADD COLUMN IF NOT EXISTS tagline VARCHAR(255) DEFAULT 'Wholesale & Retail Dealers in Fertilizers & Pesticides';
-      ALTER TABLE managers ADD COLUMN IF NOT EXISTS gstin VARCHAR(100) DEFAULT '29AAAAA0000A1Z5';
-      ALTER TABLE managers ADD COLUMN IF NOT EXISTS address TEXT DEFAULT 'Main Road, Market Yard, Karnataka - 586101';
-      ALTER TABLE managers ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT '+91 94480 00000';
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS shop_name VARCHAR(255);
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS tagline VARCHAR(255);
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS gstin VARCHAR(100);
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS address TEXT;
+      ALTER TABLE managers ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+
+      ALTER TABLE managers ALTER COLUMN shop_name DROP DEFAULT;
+      ALTER TABLE managers ALTER COLUMN tagline DROP DEFAULT;
+      ALTER TABLE managers ALTER COLUMN gstin DROP DEFAULT;
+      ALTER TABLE managers ALTER COLUMN address DROP DEFAULT;
+      ALTER TABLE managers ALTER COLUMN phone DROP DEFAULT;
+
+      -- Reset accidental Dattareya branding on any newly created independent vendor
+      UPDATE managers 
+      SET shop_name = COALESCE(name, 'Store') || '''s Store',
+          tagline = 'Retail & Khata Counter',
+          gstin = '',
+          address = '',
+          phone = ''
+      WHERE shop_name = 'Dattareya Enterprises' 
+        AND LOWER(email) != 'saicharanreddy344@gmail.com'
+        AND LOWER(COALESCE(name, '')) NOT LIKE '%dattareya%';
 
       ALTER TABLE products ADD COLUMN IF NOT EXISTS vendor_id INT;
       ALTER TABLE farmers ADD COLUMN IF NOT EXISTS vendor_id INT;
@@ -191,6 +208,7 @@ const server = http.createServer(async (req, res) => {
       const mgrRes = await pool.query('SELECT * FROM managers WHERE LOWER(email) = $1', [email]);
       if (mgrRes.rows.length > 0) {
         const mgr = mgrRes.rows[0];
+        const defaultShop = mgr.name ? `${mgr.name}'s Store` : 'Store Counter';
         return sendJson({
           authorized: true,
           role: 'MANAGER',
@@ -198,11 +216,11 @@ const server = http.createServer(async (req, res) => {
           vendorId: mgr.id,
           name: mgr.name || name,
           picture,
-          shopName: mgr.shop_name || 'Dattareya Enterprises',
-          tagline: mgr.tagline || 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
-          gstin: mgr.gstin || '29AAAAA0000A1Z5',
-          address: mgr.address || 'Main Road, Market Yard, Karnataka - 586101',
-          phone: mgr.phone || '+91 94480 00000'
+          shopName: mgr.shop_name || defaultShop,
+          tagline: mgr.tagline || 'Retail & Khata Counter',
+          gstin: mgr.gstin || '',
+          address: mgr.address || '',
+          phone: mgr.phone || ''
         });
       }
     }
@@ -217,11 +235,11 @@ const server = http.createServer(async (req, res) => {
     const vId = getVendorId();
     if (vId <= 0) {
       return sendJson({
-        shop_name: 'Dattareya Enterprises',
-        tagline: 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
-        gstin: '29AAAAA0000A1Z5',
-        address: 'Main Road, Market Yard, Karnataka - 586101',
-        phone: '+91 94480 00000'
+        shop_name: 'Store Counter',
+        tagline: 'Retail & Khata Counter',
+        gstin: '',
+        address: '',
+        phone: ''
       });
     }
     const r = await pool.query('SELECT id, email, name, shop_name, tagline, gstin, address, phone FROM managers WHERE id = $1', [vId]);
@@ -240,7 +258,7 @@ const server = http.createServer(async (req, res) => {
       WHERE id = $7 
       RETURNING id, email, name, shop_name, tagline, gstin, address, phone
     `, [
-      b.shopName || 'Dattareya Enterprises',
+      b.shopName || 'Store Counter',
       b.tagline || '',
       b.gstin || '',
       b.address || '',
@@ -262,15 +280,17 @@ const server = http.createServer(async (req, res) => {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
     const b = await getBody(req);
     const email = (b.email || '').trim().toLowerCase();
+    const name = (b.name || '').trim() || 'Store Vendor';
+    const shopName = (b.shopName || '').trim() || `${name}'s Store`;
     if (!email) return sendJson({ error: 'Email is required' }, 400);
 
     try {
       const r = await pool.query(`
         INSERT INTO managers (email, name, shop_name) 
         VALUES ($1, $2, $3) 
-        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, shop_name = EXCLUDED.shop_name
         RETURNING *
-      `, [email, b.name || 'Store Vendor', b.shopName || 'Dattareya Enterprises']);
+      `, [email, name, shopName]);
       return sendJson(r.rows[0], 201);
     } catch (err) {
       return sendJson({ error: err.message }, 500);

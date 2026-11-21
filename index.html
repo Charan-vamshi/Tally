@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dattareya Enterprises — Billing & Management</title>
+  <title>Tally Khata & Retail Billing POS</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -235,7 +235,7 @@
       </div>
 
       <div>
-        <h2 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Dattareya Enterprises</h2>
+        <h2 class="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Tally Khata & Billing POS</h2>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Platform Control & Vendor Portal</p>
       </div>
 
@@ -309,7 +309,7 @@
         <!-- Brand Pill -->
         <span class="inline-flex items-center gap-1.5 text-[11px] font-mono tracking-widest uppercase text-emerald-400 font-bold bg-emerald-950/80 border border-emerald-800/80 px-3.5 py-1 rounded-full">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-          <span id="welcome-motion-shop">Dattareya Enterprises</span>
+          <span id="welcome-motion-shop">Store Counter</span>
         </span>
 
         <!-- Dynamic Admin Hanging Welcome Title -->
@@ -475,16 +475,20 @@
 
             <!-- Terminal Fast Input Form -->
             <form onsubmit="handleQuickAddVendor(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
-              <div class="sm:col-span-6 relative">
+              <div class="sm:col-span-4 relative">
                 <label class="block text-xs font-mono text-purple-300 mb-1.5">VENDOR GMAIL ADDRESS</label>
                 <div class="relative">
                   <i data-lucide="mail" class="w-4 h-4 text-purple-400 absolute left-3.5 top-3.5"></i>
-                  <input type="email" id="quick-vendor-email" required placeholder="father.gmail@gmail.com" onfocus="CyberAudio.hover()" class="w-full pl-10 pr-3 py-3 text-xs bg-slate-900/90 border border-purple-500/40 rounded-xl text-white outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 font-mono transition">
+                  <input type="email" id="quick-vendor-email" required placeholder="vendor@gmail.com" onfocus="CyberAudio.hover()" class="w-full pl-10 pr-3 py-3 text-xs bg-slate-900/90 border border-purple-500/40 rounded-xl text-white outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 font-mono transition">
                 </div>
               </div>
-              <div class="sm:col-span-4 relative">
-                <label class="block text-xs font-mono text-purple-300 mb-1.5">NAME / COUNTER</label>
-                <input type="text" id="quick-vendor-name" placeholder="e.g. Father (Counter 1)" onfocus="CyberAudio.hover()" class="w-full px-3.5 py-3 text-xs bg-slate-900/90 border border-purple-500/40 rounded-xl text-white outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 font-sans transition">
+              <div class="sm:col-span-3 relative">
+                <label class="block text-xs font-mono text-purple-300 mb-1.5">VENDOR NAME</label>
+                <input type="text" id="quick-vendor-name" placeholder="e.g. Ramesh" onfocus="CyberAudio.hover()" class="w-full px-3.5 py-3 text-xs bg-slate-900/90 border border-purple-500/40 rounded-xl text-white outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 font-sans transition">
+              </div>
+              <div class="sm:col-span-3 relative">
+                <label class="block text-xs font-mono text-purple-300 mb-1.5">SHOP / BUSINESS NAME</label>
+                <input type="text" id="quick-vendor-shop" placeholder="e.g. Ramesh Agro Agencies" onfocus="CyberAudio.hover()" class="w-full px-3.5 py-3 text-xs bg-slate-900/90 border border-purple-500/40 rounded-xl text-white outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 font-sans transition">
               </div>
               <div class="sm:col-span-2 flex items-end">
                 <button type="submit" class="w-full py-3 neon-btn text-white text-xs font-black rounded-xl transition flex items-center justify-center gap-1.5 group cursor-pointer">
@@ -628,10 +632,10 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h1 id="vendor-shop-name" class="font-bold text-lg leading-tight text-slate-900 dark:text-white tracking-tight">Dattareya Enterprises</h1>
-                <span id="vendor-shop-tagline" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Fertilizers & Pesticides</span>
+                <h1 id="vendor-shop-name" class="font-bold text-lg leading-tight text-slate-900 dark:text-white tracking-tight">Store Counter</h1>
+                <span id="vendor-shop-tagline" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">Retail Counter</span>
               </div>
-              <p id="vendor-shop-sub" class="text-xs text-slate-500 dark:text-slate-400 font-mono">GSTIN: 29AAAAA0000A1Z5 | Counter POS</p>
+              <p id="vendor-shop-sub" class="text-xs text-slate-500 dark:text-slate-400 font-mono">Counter POS</p>
             </div>
           </div>
 
@@ -1044,24 +1048,24 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Shop / Trading Name</label>
-                <input type="text" id="setting-shop-name" required placeholder="e.g. Dattareya Enterprises" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition text-sm font-bold">
+                <input type="text" id="setting-shop-name" required placeholder="e.g. Modern Traders" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition text-sm font-bold">
               </div>
 
               <div>
                 <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">GSTIN Number</label>
-                <input type="text" id="setting-gstin" required placeholder="29AAAAA0000A1Z5" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition font-mono uppercase text-sm">
+                <input type="text" id="setting-gstin" placeholder="29AAAAA0000A1Z5" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition font-mono uppercase text-sm">
               </div>
             </div>
 
             <div>
               <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Business Tagline / Nature of Goods</label>
-              <input type="text" id="setting-tagline" placeholder="Wholesale & Retail Dealers in Fertilizers, Pesticides & Seeds" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
+              <input type="text" id="setting-tagline" placeholder="Wholesale & Retail Counter" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Shop Contact Phone / Mobile</label>
-                <input type="tel" id="setting-phone" placeholder="+91 94480 00000" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition font-mono">
+                <input type="tel" id="setting-phone" placeholder="+91 90000 00000" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition font-mono">
               </div>
 
               <div>
@@ -1072,7 +1076,7 @@
 
             <div>
               <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Complete Store Address</label>
-              <textarea id="setting-address" rows="2" placeholder="Main Road, Market Yard, Karnataka - 586101" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition"></textarea>
+              <textarea id="setting-address" rows="2" placeholder="Shop Address, City, State - PIN" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition"></textarea>
             </div>
 
             <div class="pt-2 flex items-center justify-between">
@@ -1114,10 +1118,10 @@
 
       <div class="border-2 border-slate-900 p-4 font-sans text-xs text-slate-900 leading-normal bg-white">
         <div class="text-center pb-3 border-b-2 border-slate-900">
-          <h2 id="modal-shop-name" class="text-lg font-extrabold tracking-wide uppercase">Dattareya Enterprises</h2>
-          <p id="modal-shop-tagline" class="text-[11px] font-semibold">Wholesale & Retail Dealers in Fertilizers, Pesticides & Seeds</p>
-          <p id="modal-shop-addr" class="text-[11px]">Main Road, Market Yard, Karnataka - 586101</p>
-          <p class="text-[11px] font-mono mt-0.5"><strong>GSTIN:</strong> <span id="modal-shop-gstin">29AAAAA0000A1Z5</span> | <strong>Phone:</strong> <span id="modal-shop-phone">+91 94480 00000</span></p>
+          <h2 id="modal-shop-name" class="text-lg font-extrabold tracking-wide uppercase">Store Counter</h2>
+          <p id="modal-shop-tagline" class="text-[11px] font-semibold">Retail & Wholesale Tax Invoice</p>
+          <p id="modal-shop-addr" class="text-[11px]"></p>
+          <p class="text-[11px] font-mono mt-0.5"><strong>GSTIN:</strong> <span id="modal-shop-gstin">-</span> | <strong>Phone:</strong> <span id="modal-shop-phone">-</span></p>
         </div>
 
         <div class="text-center font-bold uppercase py-1 border-b border-slate-900 tracking-wider bg-slate-100">
@@ -1187,7 +1191,7 @@
             <p>Customer Signature</p>
           </div>
           <div class="text-right">
-            <p id="modal-shop-signatory" class="font-bold">For DATTAREYA ENTERPRISES</p>
+            <p id="modal-shop-signatory" class="font-bold">Authorised Signatory</p>
             <div class="h-10"></div>
             <p>Authorised Signatory</p>
           </div>
@@ -1367,11 +1371,11 @@
             name: authData.role === 'OWNER' ? 'Cherry' : (authData.name || name),
             role: authData.role, // 'OWNER' or 'MANAGER'
             picture: authData.picture || picture,
-            shopName: authData.shopName || 'Dattareya Enterprises',
-            tagline: authData.tagline || 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
-            gstin: authData.gstin || '29AAAAA0000A1Z5',
-            address: authData.address || 'Main Road, Market Yard, Karnataka - 586101',
-            phone: authData.phone || '+91 94480 00000'
+            shopName: authData.shopName || (authData.name ? `${authData.name}'s Store` : 'Store Counter'),
+            tagline: authData.tagline || 'Retail & Khata Counter',
+            gstin: authData.gstin || '',
+            address: authData.address || '',
+            phone: authData.phone || ''
           };
           sessionStorage.setItem('tally_user', JSON.stringify(currentUser));
 
@@ -1403,11 +1407,11 @@
 
     function applyShopBranding() {
       if (!currentUser) return;
-      const sName = currentUser.shopName || 'Dattareya Enterprises';
-      const sTag = currentUser.tagline || 'Wholesale & Retail Dealers in Fertilizers & Pesticides';
-      const sGstin = currentUser.gstin || '29AAAAA0000A1Z5';
-      const sPhone = currentUser.phone || '+91 94480 00000';
-      const sAddr = currentUser.address || 'Main Road, Market Yard, Karnataka - 586101';
+      const sName = currentUser.shopName || (currentUser.name ? `${currentUser.name}'s Store` : 'Store Counter');
+      const sTag = currentUser.tagline || 'Retail Counter';
+      const sGstin = currentUser.gstin || '-';
+      const sPhone = currentUser.phone || '-';
+      const sAddr = currentUser.address || '';
 
       // Top Header
       const nameEl = document.getElementById('vendor-shop-name');
@@ -1417,7 +1421,7 @@
 
       if (nameEl) nameEl.textContent = sName;
       if (tagEl) tagEl.textContent = sTag;
-      if (subEl) subEl.textContent = `GSTIN: ${sGstin} | Counter POS`;
+      if (subEl) subEl.textContent = (sGstin && sGstin !== '-') ? `GSTIN: ${sGstin} | Counter POS` : 'Counter POS';
       if (welcomeShopEl) welcomeShopEl.textContent = sName;
 
       // Settings Tab Form
@@ -1428,12 +1432,12 @@
       const setName = document.getElementById('setting-vendor-name');
       const setAddr = document.getElementById('setting-address');
 
-      if (setShop) setShop.value = sName;
-      if (setGstin) setGstin.value = sGstin;
-      if (setTag) setTag.value = sTag;
-      if (setPhone) setPhone.value = sPhone;
+      if (setShop) setShop.value = currentUser.shopName || '';
+      if (setGstin) setGstin.value = currentUser.gstin || '';
+      if (setTag) setTag.value = currentUser.tagline || '';
+      if (setPhone) setPhone.value = currentUser.phone || '';
       if (setName) setName.value = currentUser.name || '';
-      if (setAddr) setAddr.value = sAddr;
+      if (setAddr) setAddr.value = currentUser.address || '';
 
       // Invoice Print Modal
       const modalShop = document.getElementById('modal-shop-name');
@@ -1448,7 +1452,7 @@
       if (modalAddr) modalAddr.textContent = sAddr;
       if (modalGstin) modalGstin.textContent = sGstin;
       if (modalPhone) modalPhone.textContent = sPhone;
-      if (modalSign) modalSign.textContent = `For ${sName.toUpperCase()}`;
+      if (modalSign) modalSign.textContent = sName ? `For ${sName.toUpperCase()}` : 'Authorised Signatory';
     }
 
     // --- HANGING SIGNBOARD MOTION WELCOME ANIMATION ---
@@ -1898,17 +1902,17 @@
       currentUser = {
         email: 'preview.counter@gmail.com',
         vendorId: 0,
-        name: 'Father (Counter 1)',
+        name: 'Demo Vendor',
         role: 'MANAGER',
         picture: 'https://www.gravatar.com/avatar?d=mp',
-        shopName: 'Dattareya Enterprises',
-        tagline: 'Wholesale & Retail Dealers in Fertilizers & Pesticides',
+        shopName: 'Demo Retail Store',
+        tagline: 'Wholesale & Retail Counter',
         gstin: '29AAAAA0000A1Z5',
-        address: 'Main Road, Market Yard, Karnataka - 586101',
-        phone: '+91 94480 00000'
+        address: 'Main Road, Market Yard',
+        phone: '+91 90000 00000'
       };
       applyShopBranding();
-      playAdminWelcomeAnimation("Father", () => {
+      playAdminWelcomeAnimation("Demo Vendor", () => {
         const modal = document.getElementById('shop-simulator-modal');
         const frame = document.getElementById('simulator-frame');
         const vendorApp = document.getElementById('vendor-app');
@@ -1970,6 +1974,7 @@
         list.forEach((v, index) => {
           const div = document.createElement('div');
           div.className = "p-4 sm:p-5 flex items-center justify-between text-xs hover:bg-purple-950/20 transition group";
+          const shopDisplay = v.shop_name || (v.name ? `${v.name}'s Store` : 'Store Vendor');
           div.innerHTML = `
             <div class="flex items-center gap-3.5">
               <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border border-purple-500/30 flex items-center justify-center font-bold text-cyan-300 font-mono text-sm">
@@ -1977,10 +1982,10 @@
               </div>
               <div>
                 <p class="font-extrabold text-sm text-white flex items-center gap-2">
-                  ${v.name || 'Store Vendor'}
+                  ${shopDisplay}
                   <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">LIVE VENDOR</span>
                 </p>
-                <p class="text-slate-400 font-mono text-xs mt-0.5">${v.email}</p>
+                <p class="text-slate-400 font-mono text-xs mt-0.5">${v.name || 'Vendor'} • ${v.email}</p>
               </div>
             </div>
             <div class="flex items-center gap-2">
@@ -2002,6 +2007,8 @@
       e.preventDefault();
       const email = document.getElementById('quick-vendor-email').value.trim();
       const name = document.getElementById('quick-vendor-name').value.trim() || 'Store Vendor';
+      const shopInput = document.getElementById('quick-vendor-shop');
+      const shopName = (shopInput ? shopInput.value.trim() : '') || `${name}'s Store`;
 
       if (!email) return;
 
@@ -2009,12 +2016,13 @@
         await fetch('/api/managers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, name })
+          body: JSON.stringify({ email, name, shopName })
         });
         CyberAudio.deploy();
         document.getElementById('quick-vendor-email').value = '';
         document.getElementById('quick-vendor-name').value = '';
-        pushTerminalLog(`DEPLOY: Provisioned dashboard access for ${email}`);
+        if (shopInput) shopInput.value = '';
+        pushTerminalLog(`DEPLOY: Provisioned dashboard access for ${email} (${shopName})`);
         loadOwnerVendors();
       } catch (err) {
         alert('Error authorizing vendor: ' + err.message);
@@ -2756,7 +2764,8 @@
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.setAttribute('href', url);
-      a.setAttribute('download', `Dattareya_Sales_Stock_${new Date().toISOString().slice(0,10)}.csv`);
+      const shopPrefix = (currentUser && currentUser.shopName) ? currentUser.shopName.replace(/[^a-zA-Z0-9]/g, '_') : 'Store';
+      a.setAttribute('download', `${shopPrefix}_Sales_Stock_${new Date().toISOString().slice(0,10)}.csv`);
       a.click();
     }
 
