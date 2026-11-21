@@ -209,7 +209,7 @@
           <div class="p-2 space-y-0.5">
             <p class="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-0.5">Invoice Details:</p>
             <p><strong>Invoice No:</strong> <span id="detail-bill-no" class="font-mono font-bold">-</span></p>
-            <p><strong>Date & Time:</strong> <span id="detail-bill-date">-</span></p>
+            <p><strong>Date:</strong> <span id="detail-bill-date">-</span></p>
             <p><strong>Payment Mode:</strong> <span id="detail-bill-mode" class="font-semibold uppercase text-rose-600">Credit / Udhar</span></p>
           </div>
         </div>
@@ -643,7 +643,7 @@
       document.getElementById('detail-bill-no').textContent = tx.invoiceNo;
       
       const dateObj = new Date(tx.date);
-      document.getElementById('detail-bill-date').textContent = `${dateObj.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })} (${dateObj.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })})`;
+      document.getElementById('detail-bill-date').textContent = dateObj.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
       const isCredit = (tx.isCredit === true || tx.paymentMode === 'Credit');
       const modeEl = document.getElementById('detail-bill-mode');
       if (modeEl) {

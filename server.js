@@ -129,7 +129,33 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       ALTER TABLE farmer_payments ADD COLUMN IF NOT EXISTS vendor_id INT;
+
+      -- Allow each vendor to have their own sequential series (INV-001, etc.)
+      ALTER TABLE invoices DROP CONSTRAINT IF EXISTS invoices_invoice_no_key;
+
+      CREATE TABLE IF NOT EXISTS system_migrations (
+        key VARCHAR(100) PRIMARY KEY,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
+
+    // One-time clean renumbering of existing test invoices starting from INV-001 per store in chronological order
+    const migCheck = await client.query("SELECT key FROM system_migrations WHERE key = 'renumber_test_invoices_inv_001'");
+    if (migCheck.rows.length === 0) {
+      await client.query(`
+        WITH numbered AS (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY COALESCE(vendor_id, 1) ORDER BY id ASC) as seq
+          FROM invoices
+        )
+        UPDATE invoices
+        SET invoice_no = 'INV-' || LPAD(numbered.seq::text, 3, '0')
+        FROM numbered
+        WHERE invoices.id = numbered.id
+      `);
+      await client.query("INSERT INTO system_migrations (key) VALUES ('renumber_test_invoices_inv_001')");
+      console.log('Successfully renumbered existing test invoices starting from INV-001 per vendor.');
+    }
+    await client.query("CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_vendor_invoice_no ON invoices (vendor_id, invoice_no)");
 
     client.release();
     console.log('Database tables & multi-tenant partitions ready.');
@@ -547,36 +573,48 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/invoices' && req.method === 'POST') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
     const vId = getVendorId();
+    const currentVendor = vId > 0 ? vId : 1;
     const b = await getBody(req);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      
+      // Strict per-vendor serialization lock to guarantee sequential gapless invoice numbers
+      await client.query('SELECT pg_advisory_xact_lock($1)', [currentVendor]);
+
+      // Calculate next permanent sequential invoice number for this vendor (e.g. INV-001, INV-002, etc.)
+      const seqRes = await client.query(`
+        SELECT COALESCE(
+          MAX(
+            CASE 
+              WHEN invoice_no ~ '^INV-[0-9]+$' THEN (SUBSTRING(invoice_no FROM 5))::INT 
+              ELSE 0 
+            END
+          ), 0
+        ) + 1 AS next_seq 
+        FROM invoices 
+        WHERE vendor_id = $1
+      `, [currentVendor]);
+      const nextSeq = parseInt(seqRes.rows[0].next_seq, 10);
+      const invoiceNo = `INV-${String(nextSeq).padStart(3, '0')}`;
       
       const invQuery = `
         INSERT INTO invoices (invoice_no, customer_type, customer_name, customer_phone, payment_mode, subtotal, cgst, sgst, grand_total, items, vendor_id)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *
       `;
       const invRes = await client.query(invQuery, [
-        b.invoiceNo, b.customerType, b.customerName, b.customerPhone,
+        invoiceNo, b.customerType, b.customerName, b.customerPhone,
         b.paymentMode, b.subtotal, b.cgst, b.sgst, b.grandTotal, JSON.stringify(b.items),
-        vId > 0 ? vId : 1
+        currentVendor
       ]);
 
       for (const item of b.items) {
-        if (vId > 0) {
-          await client.query('UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2 AND vendor_id = $3', [item.qty, item.id, vId]);
-        } else {
-          await client.query('UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2', [item.qty, item.id]);
-        }
+        await client.query('UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2 AND vendor_id = $3', [item.qty, item.id, currentVendor]);
       }
 
       if (b.paymentMode === 'Credit' && b.customerType === 'khata') {
         const lastTx = `Today (Udhar +₹${b.grandTotal})`;
-        if (vId > 0) {
-          await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3 AND vendor_id = $4', [b.grandTotal, lastTx, b.customerName, vId]);
-        } else {
-          await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3', [b.grandTotal, lastTx, b.customerName]);
-        }
+        await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3 AND vendor_id = $4', [b.grandTotal, lastTx, b.customerName, currentVendor]);
       }
 
       await client.query('COMMIT');

@@ -242,8 +242,8 @@
           </div>
           <div class="p-2 space-y-0.5">
             <p class="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-0.5">Invoice Details:</p>
-            <p><strong>Invoice No:</strong> <span id="modal-bill-no" class="font-mono font-bold">INV-0001</span></p>
-            <p><strong>Date & Time:</strong> <span id="modal-bill-date">Today</span></p>
+            <p><strong>Invoice No:</strong> <span id="modal-bill-no" class="font-mono font-bold">INV-001</span></p>
+            <p><strong>Date:</strong> <span id="modal-bill-date">Today</span></p>
             <p><strong>Payment Mode:</strong> <span id="modal-bill-mode" class="font-semibold uppercase">Cash</span></p>
           </div>
         </div>
@@ -562,10 +562,8 @@
       const custPhone = document.getElementById('cust-phone-input').value.trim() || '';
 
       const { subtotal, totalGst, grandTotal } = calculateBillTotals();
-      const invoiceNo = `INV-${Date.now().toString().slice(-6)}`;
 
       const invoicePayload = {
-        invoiceNo,
         customerType: custType,
         customerName: custName,
         customerPhone: custPhone,
