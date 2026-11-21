@@ -107,6 +107,11 @@ async function initDatabase() {
       ALTER TABLE invoices ADD COLUMN IF NOT EXISTS vendor_id INT;
       ALTER TABLE invoices ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE';
       UPDATE invoices SET status = 'ACTIVE' WHERE status IS NULL;
+
+      -- Assign legacy unassigned day-1 records exclusively to Vendor 1 so they never leak to new vendors
+      UPDATE products SET vendor_id = 1 WHERE vendor_id IS NULL;
+      UPDATE farmers SET vendor_id = 1 WHERE vendor_id IS NULL;
+      UPDATE invoices SET vendor_id = 1 WHERE vendor_id IS NULL;
     `);
 
     client.release();
@@ -332,7 +337,7 @@ const server = http.createServer(async (req, res) => {
     if (!pool) return sendJson([]);
     const vId = getVendorId();
     const q = vId > 0
-      ? 'SELECT id, name, category, unit, hsn, gst, purchase_price as "purchasePrice", price, stock FROM products WHERE vendor_id = $1 OR vendor_id IS NULL ORDER BY name ASC'
+      ? 'SELECT id, name, category, unit, hsn, gst, purchase_price as "purchasePrice", price, stock FROM products WHERE vendor_id = $1 ORDER BY name ASC'
       : 'SELECT id, name, category, unit, hsn, gst, purchase_price as "purchasePrice", price, stock FROM products ORDER BY id DESC';
     const params = vId > 0 ? [vId] : [];
     const r = await pool.query(q, params);
@@ -345,16 +350,21 @@ const server = http.createServer(async (req, res) => {
     const vId = getVendorId();
     const b = await getBody(req);
     const q = `INSERT INTO products (name, category, unit, hsn, gst, purchase_price, price, stock, vendor_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`;
-    const r = await pool.query(q, [b.name, b.category, b.unit, b.hsn, b.gst, b.purchasePrice, b.price, b.stock, vId > 0 ? vId : null]);
+    const r = await pool.query(q, [b.name, b.category, b.unit, b.hsn, b.gst, b.purchasePrice, b.price, b.stock, vId > 0 ? vId : 1]);
     return sendJson(r.rows[0], 201);
   }
 
   // POST Adjust Stock
   if (pathname.match(/^\/api\/products\/(\d+)\/adjust-stock$/) && req.method === 'POST') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
     const id = pathname.split('/')[3];
     const b = await getBody(req);
-    const r = await pool.query('UPDATE products SET stock = GREATEST(0, stock + $1) WHERE id = $2 RETURNING *', [parseInt(b.amount || 0), id]);
+    const q = vId > 0
+      ? 'UPDATE products SET stock = GREATEST(0, stock + $1) WHERE id = $2 AND vendor_id = $3 RETURNING *'
+      : 'UPDATE products SET stock = GREATEST(0, stock + $1) WHERE id = $2 RETURNING *';
+    const params = vId > 0 ? [parseInt(b.amount || 0), id, vId] : [parseInt(b.amount || 0), id];
+    const r = await pool.query(q, params);
     return sendJson(r.rows[0]);
   }
 
@@ -363,7 +373,7 @@ const server = http.createServer(async (req, res) => {
     if (!pool) return sendJson([]);
     const vId = getVendorId();
     const q = vId > 0
-      ? 'SELECT id, name, village, phone, outstanding, last_tx as "lastTx" FROM farmers WHERE vendor_id = $1 OR vendor_id IS NULL ORDER BY name ASC'
+      ? 'SELECT id, name, village, phone, outstanding, last_tx as "lastTx" FROM farmers WHERE vendor_id = $1 ORDER BY name ASC'
       : 'SELECT id, name, village, phone, outstanding, last_tx as "lastTx" FROM farmers ORDER BY id DESC';
     const params = vId > 0 ? [vId] : [];
     const r = await pool.query(q, params);
@@ -376,18 +386,23 @@ const server = http.createServer(async (req, res) => {
     const vId = getVendorId();
     const b = await getBody(req);
     const q = `INSERT INTO farmers (name, village, phone, outstanding, last_tx, vendor_id) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`;
-    const r = await pool.query(q, [b.name, b.village || '', b.phone || '', parseFloat(b.outstanding || 0), 'Account Opened', vId > 0 ? vId : null]);
+    const r = await pool.query(q, [b.name, b.village || '', b.phone || '', parseFloat(b.outstanding || 0), 'Account Opened', vId > 0 ? vId : 1]);
     return sendJson(r.rows[0], 201);
   }
 
   // POST Farmer Repayment
   if (pathname.match(/^\/api\/farmers\/(\d+)\/payment$/) && req.method === 'POST') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
     const id = pathname.split('/')[3];
     const b = await getBody(req);
     const amount = parseFloat(b.amount || 0);
     const lastTx = `Today (Paid -₹${amount})`;
-    const r = await pool.query('UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE id = $3 RETURNING *', [amount, lastTx, id]);
+    const q = vId > 0
+      ? 'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE id = $3 AND vendor_id = $4 RETURNING *'
+      : 'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE id = $3 RETURNING *';
+    const params = vId > 0 ? [amount, lastTx, id, vId] : [amount, lastTx, id];
+    const r = await pool.query(q, params);
     return sendJson(r.rows[0]);
   }
 
@@ -419,17 +434,21 @@ const server = http.createServer(async (req, res) => {
       const invRes = await client.query(invQuery, [
         b.invoiceNo, b.customerType, b.customerName, b.customerPhone,
         b.paymentMode, b.subtotal, b.cgst, b.sgst, b.grandTotal, JSON.stringify(b.items),
-        vId > 0 ? vId : null
+        vId > 0 ? vId : 1
       ]);
 
       for (const item of b.items) {
-        await client.query('UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2', [item.qty, item.id]);
+        if (vId > 0) {
+          await client.query('UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2 AND vendor_id = $3', [item.qty, item.id, vId]);
+        } else {
+          await client.query('UPDATE products SET stock = GREATEST(0, stock - $1) WHERE id = $2', [item.qty, item.id]);
+        }
       }
 
       if (b.paymentMode === 'Credit' && b.customerType === 'khata') {
         const lastTx = `Today (Udhar +₹${b.grandTotal})`;
         if (vId > 0) {
-          await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3 AND (vendor_id = $4 OR vendor_id IS NULL)', [b.grandTotal, lastTx, b.customerName, vId]);
+          await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3 AND vendor_id = $4', [b.grandTotal, lastTx, b.customerName, vId]);
         } else {
           await client.query('UPDATE farmers SET outstanding = outstanding + $1, last_tx = $2 WHERE name = $3', [b.grandTotal, lastTx, b.customerName]);
         }
@@ -448,6 +467,7 @@ const server = http.createServer(async (req, res) => {
   // DELETE / Cancel Unwanted Invoice & Reverse Stock + Khata
   if (pathname.startsWith('/api/invoices/') && req.method === 'DELETE') {
     if (!pool) return sendJson({ error: 'DB not connected' }, 500);
+    const vId = getVendorId();
     const parts = pathname.split('/');
     const id = parseInt(parts[3]);
     if (!id) return sendJson({ error: 'Invalid invoice ID' }, 400);
@@ -456,11 +476,15 @@ const server = http.createServer(async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      const invRes = await client.query('SELECT * FROM invoices WHERE id = $1 FOR UPDATE', [id]);
+      const invQuery = vId > 0
+        ? 'SELECT * FROM invoices WHERE id = $1 AND vendor_id = $2 FOR UPDATE'
+        : 'SELECT * FROM invoices WHERE id = $1 FOR UPDATE';
+      const invParams = vId > 0 ? [id, vId] : [id];
+      const invRes = await client.query(invQuery, invParams);
       if (invRes.rows.length === 0) {
         await client.query('ROLLBACK');
         client.release();
-        return sendJson({ error: 'Invoice not found' }, 404);
+        return sendJson({ error: 'Invoice not found or access denied' }, 404);
       }
 
       const inv = invRes.rows[0];
@@ -477,17 +501,28 @@ const server = http.createServer(async (req, res) => {
       const items = Array.isArray(inv.items) ? inv.items : JSON.parse(inv.items || '[]');
       for (const item of items) {
         if (item.id && item.qty) {
-          await client.query('UPDATE products SET stock = stock + $1 WHERE id = $2', [item.qty, item.id]);
+          if (vId > 0) {
+            await client.query('UPDATE products SET stock = stock + $1 WHERE id = $2 AND vendor_id = $3', [item.qty, item.id, vId]);
+          } else {
+            await client.query('UPDATE products SET stock = stock + $1 WHERE id = $2', [item.qty, item.id]);
+          }
         }
       }
 
       // 3. Reverse Khata debt if this was an Udhar bill
       if (inv.payment_mode === 'Credit' && inv.customer_type === 'khata') {
         const revertTx = `Bill ${inv.invoice_no} Cancelled (-₹${inv.grand_total})`;
-        await client.query(
-          'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE name = $3',
-          [inv.grand_total, revertTx, inv.customer_name]
-        );
+        if (vId > 0) {
+          await client.query(
+            'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE name = $3 AND vendor_id = $4',
+            [inv.grand_total, revertTx, inv.customer_name, vId]
+          );
+        } else {
+          await client.query(
+            'UPDATE farmers SET outstanding = GREATEST(0, outstanding - $1), last_tx = $2 WHERE name = $3',
+            [inv.grand_total, revertTx, inv.customer_name]
+          );
+        }
       }
 
       await client.query('COMMIT');
@@ -506,7 +541,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const vId = getVendorId();
       const whereClause = vId > 0
-        ? `WHERE (vendor_id = $1 OR vendor_id IS NULL) AND COALESCE(status, 'ACTIVE') = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`
+        ? `WHERE vendor_id = $1 AND COALESCE(status, 'ACTIVE') = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`
         : `WHERE COALESCE(status, 'ACTIVE') = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`;
       const params = vId > 0 ? [vId] : [];
       const invRes = await pool.query(`
