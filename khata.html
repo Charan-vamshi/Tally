@@ -181,27 +181,36 @@
       </div>
 
       <div class="border-2 border-slate-900 p-4 font-sans text-xs text-slate-900 leading-normal bg-white">
-        <div class="text-center pb-3 border-b-2 border-slate-900">
-          <h2 id="detail-shop-name" class="text-lg font-extrabold tracking-wide uppercase">Store Counter</h2>
-          <p id="detail-shop-tagline" class="text-[11px] font-semibold">Retail & Wholesale Tax Invoice</p>
-          <p id="detail-shop-addr" class="text-[11px]"></p>
-          <p class="text-[11px] font-mono mt-0.5"><strong>GSTIN:</strong> <span id="detail-shop-gstin">-</span> | <strong>Phone:</strong> <span id="detail-shop-phone">-</span></p>
+        <!-- Top Mandatory Store Header: GSTIN & Mobile at top, Shop Name large & bold -->
+        <div class="pb-3 border-b-2 border-slate-900">
+          <div class="flex justify-between items-center text-[11px] font-mono border-b border-slate-200 pb-1 mb-1.5">
+            <span><strong>GSTIN:</strong> <span id="detail-shop-gstin">-</span></span>
+            <span><strong>Mobile:</strong> <span id="detail-shop-phone">-</span></span>
+          </div>
+          <div class="text-center space-y-0.5">
+            <h2 id="detail-shop-name" class="text-xl font-black tracking-wide uppercase">Store Counter</h2>
+            <p id="detail-shop-tagline" class="text-[11px] font-semibold text-slate-700">Retail & Wholesale Tax Invoice</p>
+            <p id="detail-shop-addr" class="text-[11px] text-slate-600"></p>
+          </div>
         </div>
 
-        <div class="text-center font-bold uppercase py-1 border-b border-slate-900 tracking-wider bg-slate-100">
-          Tax Invoice (Khata Credit)
+        <div class="text-center font-bold uppercase py-1 border-b border-slate-900 tracking-wider bg-slate-100 text-[11px]">
+          Tax Invoice
         </div>
 
+        <!-- Swapped: Left has Customer (Name, Address, Mobile), Right has Invoice (No, Date, Mode) -->
         <div class="grid grid-cols-2 border-b border-slate-900 text-[11px]">
           <div class="p-2 border-r border-slate-900 space-y-0.5">
-            <p><strong>Invoice No:</strong> <span id="detail-bill-no" class="font-mono">-</span></p>
-            <p><strong>Date & Time:</strong> <span id="detail-bill-date">-</span></p>
-            <p><strong>Payment Mode:</strong> <span id="detail-bill-mode" class="font-semibold uppercase text-rose-600">Credit / Udhar</span></p>
+            <p class="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-0.5">Buyer / Farmer Details:</p>
+            <p><strong>Name:</strong> <span id="detail-bill-cust" class="font-semibold">-</span></p>
+            <p><strong>Village / Address:</strong> <span id="detail-bill-village">-</span></p>
+            <p><strong>Mobile No:</strong> <span id="detail-bill-phone" class="font-mono">-</span></p>
           </div>
           <div class="p-2 space-y-0.5">
-            <p><strong>Buyer / Farmer Name:</strong> <span id="detail-bill-cust">-</span></p>
-            <p><strong>Village:</strong> <span id="detail-bill-village">-</span></p>
-            <p><strong>Mobile:</strong> <span id="detail-bill-phone" class="font-mono">-</span></p>
+            <p class="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-0.5">Invoice Details:</p>
+            <p><strong>Invoice No:</strong> <span id="detail-bill-no" class="font-mono font-bold">-</span></p>
+            <p><strong>Date & Time:</strong> <span id="detail-bill-date">-</span></p>
+            <p><strong>Payment Mode:</strong> <span id="detail-bill-mode" class="font-semibold uppercase text-rose-600">Credit / Udhar</span></p>
           </div>
         </div>
 
@@ -618,8 +627,8 @@
       currentDetailInvoice = tx;
 
       const farmer = selectedFarmerStatement ? selectedFarmerStatement.farmer : {};
-      const sName = currentUser.shopName || (currentUser.name ? `${currentUser.name}'s Store` : 'Store Counter');
-      const sTag = currentUser.tagline || 'Retail Counter';
+      const sName = (currentUser.shopName && currentUser.shopName.trim()) ? currentUser.shopName.trim() : 'STORE COUNTER';
+      const sTag = currentUser.tagline || 'Retail & Wholesale Tax Invoice';
       const sGstin = currentUser.gstin || '-';
       const sPhone = currentUser.phone || '-';
       const sAddr = currentUser.address || '';

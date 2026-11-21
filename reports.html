@@ -115,27 +115,36 @@
       </div>
 
       <div class="border-2 border-slate-900 p-4 font-sans text-xs text-slate-900 leading-normal bg-white">
-        <div class="text-center pb-3 border-b-2 border-slate-900">
-          <h2 id="modal-shop-name" class="text-lg font-extrabold tracking-wide uppercase">Store Counter</h2>
-          <p id="modal-shop-tagline" class="text-[11px] font-semibold">Retail & Wholesale Tax Invoice</p>
-          <p id="modal-shop-addr" class="text-[11px]"></p>
-          <p class="text-[11px] font-mono mt-0.5"><strong>GSTIN:</strong> <span id="modal-shop-gstin">-</span> | <strong>Phone:</strong> <span id="modal-shop-phone">-</span></p>
+        <!-- Top Mandatory Store Header: GSTIN & Mobile at top, Shop Name large & bold -->
+        <div class="pb-3 border-b-2 border-slate-900">
+          <div class="flex justify-between items-center text-[11px] font-mono border-b border-slate-200 pb-1 mb-1.5">
+            <span><strong>GSTIN:</strong> <span id="modal-shop-gstin">-</span></span>
+            <span><strong>Mobile:</strong> <span id="modal-shop-phone">-</span></span>
+          </div>
+          <div class="text-center space-y-0.5">
+            <h2 id="modal-shop-name" class="text-xl font-black tracking-wide uppercase">Store Counter</h2>
+            <p id="modal-shop-tagline" class="text-[11px] font-semibold text-slate-700">Retail & Wholesale Tax Invoice</p>
+            <p id="modal-shop-addr" class="text-[11px] text-slate-600"></p>
+          </div>
         </div>
 
-        <div class="text-center font-bold uppercase py-1 border-b border-slate-900 tracking-wider bg-slate-100">
+        <div class="text-center font-bold uppercase py-1 border-b border-slate-900 tracking-wider bg-slate-100 text-[11px]">
           Tax Invoice
         </div>
 
+        <!-- Swapped: Left has Customer (Name, Address, Mobile), Right has Invoice (No, Date, Mode) -->
         <div class="grid grid-cols-2 border-b border-slate-900 text-[11px]">
           <div class="p-2 border-r border-slate-900 space-y-0.5">
-            <p><strong>Invoice No:</strong> <span id="modal-bill-no" class="font-mono">-</span></p>
-            <p><strong>Date:</strong> <span id="modal-bill-date">-</span></p>
-            <p><strong>Payment Mode:</strong> <span id="modal-bill-mode" class="font-semibold uppercase">Cash</span></p>
+            <p class="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-0.5">Buyer / Customer Details:</p>
+            <p><strong>Name:</strong> <span id="modal-bill-cust" class="font-semibold">-</span></p>
+            <p><strong>Village / Address:</strong> <span id="modal-bill-village">-</span></p>
+            <p><strong>Mobile No:</strong> <span id="modal-bill-phone" class="font-mono">-</span></p>
           </div>
           <div class="p-2 space-y-0.5">
-            <p><strong>Buyer / Farmer Name:</strong> <span id="modal-bill-cust">-</span></p>
-            <p><strong>Village / Address:</strong> <span id="modal-bill-village">-</span></p>
-            <p><strong>Mobile:</strong> <span id="modal-bill-phone" class="font-mono">-</span></p>
+            <p class="font-bold text-slate-900 uppercase text-[10px] tracking-wider mb-0.5">Invoice Details:</p>
+            <p><strong>Invoice No:</strong> <span id="modal-bill-no" class="font-mono font-bold">-</span></p>
+            <p><strong>Date & Time:</strong> <span id="modal-bill-date">-</span></p>
+            <p><strong>Payment Mode:</strong> <span id="modal-bill-mode" class="font-semibold uppercase">-</span></p>
           </div>
         </div>
 
@@ -308,8 +317,8 @@
       const inv = invoices.find(i => i.id === invId);
       if (!inv) return;
 
-      const sName = currentUser.shopName || (currentUser.name ? `${currentUser.name}'s Store` : 'Store Counter');
-      const sTag = currentUser.tagline || 'Retail Counter';
+      const sName = (currentUser.shopName && currentUser.shopName.trim()) ? currentUser.shopName.trim() : 'STORE COUNTER';
+      const sTag = currentUser.tagline || 'Retail & Wholesale Tax Invoice';
       const sGstin = currentUser.gstin || '-';
       const sPhone = currentUser.phone || '-';
       const sAddr = currentUser.address || '';
