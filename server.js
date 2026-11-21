@@ -467,20 +467,18 @@ const server = http.createServer(async (req, res) => {
     if (fRes.rows.length === 0) return sendJson({ error: 'Farmer not found' }, 404);
     const farmer = fRes.rows[0];
 
-    // 2. Get all ACTIVE credit invoices for this farmer (exclude CANCELLED/deleted)
+    // 2. Get all ACTIVE invoices for this farmer (Udhar & Paid, exclude CANCELLED/deleted)
     const invQuery = vId > 0
       ? `SELECT id, invoice_no, payment_mode, customer_type, subtotal, cgst, sgst, grand_total, items, status, created_at 
          FROM invoices 
          WHERE (TRIM(customer_name) ILIKE TRIM($1)) 
            AND COALESCE(status, 'ACTIVE') = 'ACTIVE'
-           AND (payment_mode = 'Credit' OR payment_mode IS NULL)
            AND vendor_id = $2 
          ORDER BY id DESC`
       : `SELECT id, invoice_no, payment_mode, customer_type, subtotal, cgst, sgst, grand_total, items, status, created_at 
          FROM invoices 
          WHERE (TRIM(customer_name) ILIKE TRIM($1)) 
            AND COALESCE(status, 'ACTIVE') = 'ACTIVE'
-           AND (payment_mode = 'Credit' OR payment_mode IS NULL)
          ORDER BY id DESC`;
     const invParams = vId > 0 ? [farmer.name, vId] : [farmer.name];
     const invRes = await pool.query(invQuery, invParams);
@@ -496,12 +494,14 @@ const server = http.createServer(async (req, res) => {
     const transactions = [];
 
     invRes.rows.forEach(inv => {
+      const isCredit = (inv.payment_mode === 'Credit' || !inv.payment_mode);
       transactions.push({
         type: 'BILL',
         id: inv.id,
         invoiceNo: inv.invoice_no,
         amount: parseFloat(inv.grand_total || 0),
-        paymentMode: inv.payment_mode,
+        paymentMode: inv.payment_mode || 'Cash',
+        isCredit: isCredit,
         status: inv.status || 'ACTIVE',
         items: typeof inv.items === 'string' ? JSON.parse(inv.items || '[]') : (inv.items || []),
         createdAt: inv.created_at,
