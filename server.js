@@ -93,7 +93,7 @@ async function initDatabase() {
 
       -- Reset accidental Dattareya branding on any newly created independent vendor
       UPDATE managers 
-      SET shop_name = COALESCE(name, 'Store') || '''s Store',
+      SET shop_name = CONCAT(COALESCE(name, 'Store'), '''s Store'),
           tagline = 'Retail & Khata Counter',
           gstin = '',
           address = '',
@@ -105,6 +105,8 @@ async function initDatabase() {
       ALTER TABLE products ADD COLUMN IF NOT EXISTS vendor_id INT;
       ALTER TABLE farmers ADD COLUMN IF NOT EXISTS vendor_id INT;
       ALTER TABLE invoices ADD COLUMN IF NOT EXISTS vendor_id INT;
+      ALTER TABLE invoices ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ACTIVE';
+      UPDATE invoices SET status = 'ACTIVE' WHERE status IS NULL;
     `);
 
     client.release();
@@ -162,6 +164,11 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(data));
   };
+
+  if (pathname === '/favicon.ico') {
+    res.writeHead(204);
+    return res.end();
+  }
 
   // Extract Vendor ID from header or query for multi-tenant data isolation
   const getVendorId = () => {
@@ -496,32 +503,37 @@ const server = http.createServer(async (req, res) => {
   // GET Real Reports (Scoped to current vendor)
   if (pathname === '/api/reports' && req.method === 'GET') {
     if (!pool) return sendJson({ totalSales: 0, totalGst: 0, cash: 0, upi: 0, card: 0, credit: 0, count: 0 });
-    const vId = getVendorId();
-    const whereClause = vId > 0
-      ? `WHERE (vendor_id = $1 OR vendor_id IS NULL) AND status = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`
-      : `WHERE status = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`;
-    const params = vId > 0 ? [vId] : [];
-    const invRes = await pool.query(`
-      SELECT 
-        COALESCE(SUM(grand_total), 0) as total_sales,
-        COALESCE(SUM(cgst + sgst), 0) as total_gst,
-        COALESCE(SUM(CASE WHEN payment_mode = 'Cash' THEN grand_total ELSE 0 END), 0) as cash,
-        COALESCE(SUM(CASE WHEN payment_mode = 'UPI' THEN grand_total ELSE 0 END), 0) as upi,
-        COALESCE(SUM(CASE WHEN payment_mode = 'Card' THEN grand_total ELSE 0 END), 0) as card,
-        COALESCE(SUM(CASE WHEN payment_mode = 'Credit' THEN grand_total ELSE 0 END), 0) as credit,
-        COUNT(*) as count
-      FROM invoices ${whereClause};
-    `, params);
-    const row = invRes.rows[0];
-    return sendJson({
-      totalSales: parseFloat(row.total_sales),
-      totalGst: parseFloat(row.total_gst),
-      cash: parseFloat(row.cash),
-      upi: parseFloat(row.upi),
-      card: parseFloat(row.card),
-      credit: parseFloat(row.credit),
-      count: parseInt(row.count)
-    });
+    try {
+      const vId = getVendorId();
+      const whereClause = vId > 0
+        ? `WHERE (vendor_id = $1 OR vendor_id IS NULL) AND COALESCE(status, 'ACTIVE') = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`
+        : `WHERE COALESCE(status, 'ACTIVE') = 'ACTIVE' AND DATE(created_at) = CURRENT_DATE`;
+      const params = vId > 0 ? [vId] : [];
+      const invRes = await pool.query(`
+        SELECT 
+          COALESCE(SUM(grand_total), 0) as total_sales,
+          COALESCE(SUM(cgst + sgst), 0) as total_gst,
+          COALESCE(SUM(CASE WHEN payment_mode = 'Cash' THEN grand_total ELSE 0 END), 0) as cash,
+          COALESCE(SUM(CASE WHEN payment_mode = 'UPI' THEN grand_total ELSE 0 END), 0) as upi,
+          COALESCE(SUM(CASE WHEN payment_mode = 'Card' THEN grand_total ELSE 0 END), 0) as card,
+          COALESCE(SUM(CASE WHEN payment_mode = 'Credit' THEN grand_total ELSE 0 END), 0) as credit,
+          COUNT(*) as count
+        FROM invoices ${whereClause};
+      `, params);
+      const row = invRes.rows[0];
+      return sendJson({
+        totalSales: parseFloat(row.total_sales || 0),
+        totalGst: parseFloat(row.total_gst || 0),
+        cash: parseFloat(row.cash || 0),
+        upi: parseFloat(row.upi || 0),
+        card: parseFloat(row.card || 0),
+        credit: parseFloat(row.credit || 0),
+        count: parseInt(row.count || 0)
+      });
+    } catch (err) {
+      console.error('Reports query error:', err.message);
+      return sendJson({ totalSales: 0, totalGst: 0, cash: 0, upi: 0, card: 0, credit: 0, count: 0 });
+    }
   }
 
   // --- STATIC FILE SERVING ---
