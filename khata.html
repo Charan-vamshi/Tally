@@ -552,19 +552,6 @@
           row.onclick = () => openBillDetailModal(tx);
         }
 
-        // Summary of items if available
-        let desc = '';
-        if (isBill) {
-          const itemsList = tx.items || [];
-          if (itemsList.length > 0) {
-            desc = itemsList.map(it => `${it.name} (${it.qty} ${it.unit || 'Unit'})`).join(', ');
-          } else {
-            desc = 'Agri Store Purchase';
-          }
-        } else {
-          desc = tx.notes ? `${tx.notes} • ${tx.paymentMode}` : `Repayment received via ${tx.paymentMode}`;
-        }
-
         let iconHtml = '';
         let badgeHtml = '';
         let amountHtml = '';
@@ -595,13 +582,18 @@
             ${iconHtml}
             <div class="overflow-hidden">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-xs ${isBill ? 'text-slate-900 dark:text-white group-hover:text-emerald-600 transition' : 'text-slate-900 dark:text-white'}">
+                <span class="font-mono font-bold text-sm ${isBill ? 'text-slate-900 dark:text-white group-hover:text-emerald-600 transition' : 'text-slate-900 dark:text-white'}">
                   ${isBill ? `Bill #${tx.invoiceNo}` : `Payment Received`}
                 </span>
                 ${badgeHtml}
               </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${desc}</p>
-              <span class="text-[10px] font-mono text-slate-400">${dateStr} at ${timeStr}</span>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-slate-700 dark:text-slate-300">
+                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                  ${dateStr} &bull; ${timeStr}
+                </span>
+                ${!isBill && tx.notes ? `<span class="text-[11px] text-slate-400 truncate">(${tx.notes})</span>` : ''}
+              </div>
             </div>
           </div>
 
