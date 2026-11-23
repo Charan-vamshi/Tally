@@ -239,9 +239,10 @@
               <div class="flex items-center gap-2">
                 <span class="text-[11px] font-medium text-slate-400">Show:</span>
                 <select id="tx-filter-select" onchange="applyTransactionFilter()" class="px-3 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 font-semibold cursor-pointer">
-                  <option value="ALL">All (Udhar & Paid)</option>
+                  <option value="ALL">All Transactions</option>
                   <option value="UDHAR">Udhar Bills Only</option>
-                  <option value="PAID">Paid Bills & Repayments</option>
+                  <option value="PAID_BILLS">Paid Bills Only</option>
+                  <option value="REPAYMENTS">Repayments Only</option>
                 </select>
               </div>
             </div>
@@ -645,8 +646,10 @@
 
       if (filter === 'UDHAR') {
         filtered = currentFarmerTransactions.filter(tx => tx.type === 'BILL' && (tx.isCredit === true || tx.paymentMode === 'Credit'));
-      } else if (filter === 'PAID') {
-        filtered = currentFarmerTransactions.filter(tx => tx.type === 'PAYMENT' || (tx.type === 'BILL' && tx.isCredit === false && tx.paymentMode !== 'Credit'));
+      } else if (filter === 'PAID_BILLS') {
+        filtered = currentFarmerTransactions.filter(tx => tx.type === 'BILL' && tx.isCredit === false && tx.paymentMode !== 'Credit');
+      } else if (filter === 'REPAYMENTS') {
+        filtered = currentFarmerTransactions.filter(tx => tx.type === 'PAYMENT');
       }
 
       renderPassbookTransactions(filtered);
