@@ -167,13 +167,17 @@
 
     <!-- Invoices List Card -->
     <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-      <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <span class="text-sm font-bold text-slate-900 dark:text-white">Store Invoices Log</span>
           <p class="text-xs text-slate-500 dark:text-slate-400">Review bills, reprint tax invoices, or cancel unwanted transactions.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="exportInvoicesToCSV()" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg flex items-center gap-1.5 transition border border-slate-200 dark:border-slate-700 cursor-pointer">
+        <div class="flex items-center gap-2.5 flex-1 max-w-md justify-end">
+          <div class="relative w-full max-w-xs">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+            <input type="text" id="invoice-search-input" oninput="filterInvoices()" placeholder="Search Invoice No or Customer..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 transition">
+          </div>
+          <button onclick="exportInvoicesToCSV()" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg flex items-center gap-1.5 transition border border-slate-200 dark:border-slate-700 cursor-pointer shrink-0">
             <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV
           </button>
         </div>
@@ -362,17 +366,34 @@
       }
     }
 
-    function renderInvoices() {
+    function filterInvoices() {
+      const q = (document.getElementById('invoice-search-input')?.value || '').toLowerCase().trim();
+      if (!q) {
+        renderInvoices(invoices);
+        return;
+      }
+      const filtered = invoices.filter(inv => {
+        const invNo = (inv.invoice_no || '').toLowerCase();
+        const cust = (inv.customer_name || '').toLowerCase();
+        const mode = (inv.payment_mode || '').toLowerCase();
+        return invNo.includes(q) || cust.includes(q) || mode.includes(q);
+      });
+      renderInvoices(filtered, q);
+    }
+
+    function renderInvoices(list = invoices, searchActive = '') {
       const reportTbody = document.getElementById('reports-invoices-tbody');
       if (!reportTbody) return;
 
-      if (invoices.length === 0) {
-        reportTbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">No bills generated yet today.</td></tr>';
+      if (!list || list.length === 0) {
+        reportTbody.innerHTML = searchActive
+          ? `<tr><td colspan="6" class="p-8 text-center text-slate-400">No bills found matching "${searchActive}".</td></tr>`
+          : '<tr><td colspan="6" class="p-8 text-center text-slate-400">No bills generated yet today.</td></tr>';
         return;
       }
 
       reportTbody.innerHTML = '';
-      invoices.forEach(inv => {
+      list.forEach(inv => {
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800/40 transition";
         const isCancelled = inv.status === 'CANCELLED';
