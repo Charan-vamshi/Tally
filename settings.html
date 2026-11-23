@@ -22,6 +22,16 @@
       }
     };
   </script>
+  <style>
+    #preview-drawer {
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+    #preview-backdrop {
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity;
+    }
+  </style>
 </head>
 <body class="h-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col font-sans transition-colors duration-200">
 
@@ -33,7 +43,7 @@
 
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6">
       
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800 gap-2">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800 gap-3">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold">
             <i data-lucide="store" class="w-5 h-5"></i>
@@ -43,9 +53,15 @@
             <p class="text-xs text-slate-500 dark:text-slate-400">These details appear on your shop counter and customer printed tax invoices.</p>
           </div>
         </div>
-        <span class="text-[11px] font-mono px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 self-start sm:self-auto">
-          Neon Live Sync
-        </span>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          <button type="button" onclick="togglePreviewDrawer()" class="px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs">
+            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            <span>Preview Bill</span>
+          </button>
+          <span class="text-[11px] font-mono px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+            Neon Live Sync
+          </span>
+        </div>
       </div>
 
       <form onsubmit="handleSaveShopProfile(event)" class="space-y-4 text-xs">
@@ -106,17 +122,20 @@
 
   </main>
 
-  <!-- Floating Right-Edge Tab Button -->
-  <button id="preview-toggle-btn" onclick="togglePreviewDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 bg-slate-900 dark:bg-slate-800 text-white pl-2.5 pr-2 py-3 rounded-l-2xl shadow-2xl flex items-center gap-1.5 z-40 hover:bg-emerald-600 dark:hover:bg-emerald-600 transition cursor-pointer border border-r-0 border-slate-700 select-none group" title="Click to preview bill">
-    <i data-lucide="chevron-left" id="preview-arrow-icon" class="w-5 h-5 text-emerald-400 group-hover:text-white transition"></i>
-    <span class="text-[11px] font-bold [writing-mode:vertical-rl] tracking-wider py-1">PREVIEW BILL</span>
+  <!-- Floating Edge Trigger Pill (Linear/Shopify style) -->
+  <button id="preview-toggle-btn" onclick="togglePreviewDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-800 dark:text-slate-100 pl-3.5 pr-2.5 py-2.5 rounded-l-2xl shadow-xl border border-r-0 border-slate-200 dark:border-slate-800 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200 cursor-pointer flex items-center gap-2 group hover:-translate-x-1" title="Live Invoice Preview">
+    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+    <span class="text-xs font-bold tracking-tight">Live Preview</span>
+    <div class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center transition-colors">
+      <i data-lucide="chevron-left" class="w-4 h-4 text-slate-600 dark:text-slate-300 group-hover:text-white transition"></i>
+    </div>
   </button>
 
   <!-- Slide-out Bill Preview Backdrop -->
-  <div id="preview-backdrop" onclick="togglePreviewDrawer()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 hidden transition-opacity"></div>
+  <div id="preview-backdrop" onclick="togglePreviewDrawer()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 hidden opacity-0 transition-opacity"></div>
 
   <!-- Slide-out Bill Preview Drawer -->
-  <aside id="preview-drawer" class="fixed top-0 right-0 h-full w-full max-w-md sm:max-w-lg bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+  <aside id="preview-drawer" class="fixed top-0 right-0 h-full w-full max-w-md sm:max-w-lg bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl z-50 transform translate-x-full flex flex-col rounded-l-2xl sm:rounded-l-3xl overflow-hidden">
     <!-- Drawer Header -->
     <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
       <div class="flex items-center gap-2">
@@ -237,19 +256,24 @@
     function togglePreviewDrawer() {
       const drawer = document.getElementById('preview-drawer');
       const backdrop = document.getElementById('preview-backdrop');
-      const arrowIcon = document.getElementById('preview-arrow-icon');
       if (!drawer) return;
 
       const isOpen = !drawer.classList.contains('translate-x-full');
       if (isOpen) {
         drawer.classList.add('translate-x-full');
-        backdrop.classList.add('hidden');
-        if (arrowIcon) arrowIcon.setAttribute('data-lucide', 'chevron-left');
+        backdrop.classList.add('opacity-0');
+        backdrop.classList.remove('opacity-100');
+        setTimeout(() => {
+          backdrop.classList.add('hidden');
+        }, 200);
       } else {
-        drawer.classList.remove('translate-x-full');
-        backdrop.classList.remove('hidden');
-        if (arrowIcon) arrowIcon.setAttribute('data-lucide', 'chevron-right');
         updateLivePreview();
+        backdrop.classList.remove('hidden');
+        // Force reflow for silky smooth opacity fade-in
+        void backdrop.offsetWidth;
+        backdrop.classList.remove('opacity-0');
+        backdrop.classList.add('opacity-100');
+        drawer.classList.remove('translate-x-full');
       }
       lucide.createIcons();
     }
