@@ -24,12 +24,34 @@
   </script>
   <style>
     #preview-drawer {
-      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 440px;
+      max-width: 90vw;
+      transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: transform;
     }
-    #preview-backdrop {
-      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      will-change: opacity;
+    #preview-toggle-btn {
+      transition: right 0.32s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, border-color 0.2s ease;
+      will-change: right;
+    }
+    #settings-main-container {
+      transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), margin-right 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform, margin-right;
+    }
+    body.preview-open #preview-drawer {
+      transform: translateX(0) !important;
+    }
+    body.preview-open #preview-toggle-btn {
+      right: 440px !important;
+    }
+    @media (min-width: 1200px) {
+      body.preview-open #settings-main-container {
+        transform: translateX(-220px);
+      }
+    }
+    @media (min-width: 768px) and (max-width: 1199px) {
+      body.preview-open #settings-main-container {
+        transform: translateX(-180px);
+      }
     }
   </style>
 </head>
@@ -39,7 +61,7 @@
   <header id="app-header" class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-sm"></header>
 
   <!-- Main Viewport -->
-  <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+  <main id="settings-main-container" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
 
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6">
       
@@ -122,20 +144,17 @@
 
   </main>
 
-  <!-- Floating Edge Trigger Pill (Linear/Shopify style) -->
-  <button id="preview-toggle-btn" onclick="togglePreviewDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-800 dark:text-slate-100 pl-3.5 pr-2.5 py-2.5 rounded-l-2xl shadow-xl border border-r-0 border-slate-200 dark:border-slate-800 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200 cursor-pointer flex items-center gap-2 group hover:-translate-x-1" title="Live Invoice Preview">
+  <!-- Floating Edge Trigger Pill (Linear style) -->
+  <button id="preview-toggle-btn" onclick="togglePreviewDrawer()" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-800 dark:text-slate-100 pl-3.5 pr-2.5 py-2.5 rounded-l-2xl shadow-xl border border-r-0 border-slate-200 dark:border-slate-800 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all duration-200 cursor-pointer flex items-center gap-2 group" title="Live Invoice Preview">
     <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
     <span class="text-xs font-bold tracking-tight">Live Preview</span>
     <div class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center transition-colors">
-      <i data-lucide="chevron-left" class="w-4 h-4 text-slate-600 dark:text-slate-300 group-hover:text-white transition"></i>
+      <i id="preview-arrow-icon" data-lucide="chevron-left" class="w-4 h-4 text-slate-600 dark:text-slate-300 group-hover:text-white transition"></i>
     </div>
   </button>
 
-  <!-- Slide-out Bill Preview Backdrop -->
-  <div id="preview-backdrop" onclick="togglePreviewDrawer()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 hidden opacity-0 transition-opacity"></div>
-
   <!-- Slide-out Bill Preview Drawer -->
-  <aside id="preview-drawer" class="fixed top-0 right-0 h-full w-full max-w-md sm:max-w-lg bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl z-50 transform translate-x-full flex flex-col rounded-l-2xl sm:rounded-l-3xl overflow-hidden">
+  <aside id="preview-drawer" class="fixed top-0 right-0 h-full bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl z-30 transform translate-x-full flex flex-col rounded-l-2xl sm:rounded-l-3xl overflow-hidden">
     <!-- Drawer Header -->
     <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
       <div class="flex items-center gap-2">
@@ -254,26 +273,19 @@
     const currentUser = requireAuth('MANAGER');
 
     function togglePreviewDrawer() {
-      const drawer = document.getElementById('preview-drawer');
-      const backdrop = document.getElementById('preview-backdrop');
-      if (!drawer) return;
+      const isCurrentlyOpen = document.body.classList.contains('preview-open');
+      const arrowIcon = document.getElementById('preview-arrow-icon');
+      const toggleBtn = document.getElementById('preview-toggle-btn');
 
-      const isOpen = !drawer.classList.contains('translate-x-full');
-      if (isOpen) {
-        drawer.classList.add('translate-x-full');
-        backdrop.classList.add('opacity-0');
-        backdrop.classList.remove('opacity-100');
-        setTimeout(() => {
-          backdrop.classList.add('hidden');
-        }, 200);
+      if (isCurrentlyOpen) {
+        document.body.classList.remove('preview-open');
+        if (arrowIcon) arrowIcon.setAttribute('data-lucide', 'chevron-left');
+        if (toggleBtn) toggleBtn.setAttribute('title', 'Open Live Invoice Preview');
       } else {
         updateLivePreview();
-        backdrop.classList.remove('hidden');
-        // Force reflow for silky smooth opacity fade-in
-        void backdrop.offsetWidth;
-        backdrop.classList.remove('opacity-0');
-        backdrop.classList.add('opacity-100');
-        drawer.classList.remove('translate-x-full');
+        document.body.classList.add('preview-open');
+        if (arrowIcon) arrowIcon.setAttribute('data-lucide', 'chevron-right');
+        if (toggleBtn) toggleBtn.setAttribute('title', 'Collapse Invoice Preview');
       }
       lucide.createIcons();
     }
